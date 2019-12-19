@@ -5,6 +5,8 @@ local STACK_DIM = 5;
 local HIDDEN_DIM = 16;
 # local DROPOUT = 0.0;
 
+local NUM_OPS = std.extVar("NUM_OPS");
+
 # Encoder specified by command line arguments.
 local ETYPE = std.extVar("ENCODER");
 local ENCODER = 
@@ -28,8 +30,8 @@ local ENCODER =
     "type": "dyck",
   },
 
-  "train_data_path": "/home/willm/data/dyck2/train.txt",
-  "validation_data_path": "/home/willm/data/dyck2/valid.txt",
+  "train_data_path": "/home/willm/data/dyck" + NUM_OPS + "/train.txt",
+  "validation_data_path": "/home/willm/data/dyck" + NUM_OPS + "/valid.txt",
   
   "model": {
     "type": "language_model",

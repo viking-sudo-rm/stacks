@@ -6,9 +6,9 @@
 #SBATCH --output=/net/nfs.corp/allennlp/slurm/willm/%J.out
 #SBATCH --gpus=1
 
-source /home/willm/anaconda3/bin/activate bert-parsing
-conf=/home/willm/code/stacks/configs/predict_opening.jsonnet
+source /home/willm/anaconda3/bin/activate allennlp
+conf=/home/willm/code/stacks/configs/eval.jsonnet
 
-encoder=lstm
-dir=/tmp/willm/opening-$encoder
+encoder=multipop
+dir=/tmp/willm/eval-$encoder
 ENCODER=$encoder allennlp train $conf -s $dir --include-package=src

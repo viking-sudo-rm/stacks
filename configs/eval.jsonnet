@@ -1,27 +1,26 @@
-# Task settings.
-local TASK = "predict_opening";
-local OP_RANGE = 5;
-local CENTER_EMBED_PROB = 0.8;
-
 # Model hyperparameters.
 local BATCH_SIZE = 64;
 local EMBEDDING_DIM = 8;
-local STACK_DIM = 3 * OP_RANGE;  # Scale the size of the stack with how many parentheses we have.
+local STACK_DIM = 5;
 local HIDDEN_DIM = 16;
 # local DROPOUT = 0.0;
 
 # Encoder specified by command line arguments.
 local ETYPE = std.extVar("ENCODER");
 local ENCODER = 
-  if ETYPE == "stack" then {
+  if ETYPE == "basic" then {
     "type": "stack-encoder",
+    "input_dim": EMBEDDING_DIM,
     "stack_dim": STACK_DIM,
-    "controller": {
-      "input_dim": EMBEDDING_DIM + STACK_DIM,
-      "num_layers": 2,
-      "hidden_dims": HIDDEN_DIM,
-      "activations": "relu",
-    }
+    "hidden_dim": HIDDEN_DIM,
+  }
+  else if ETYPE == "multipop" then {
+    "type": "stack-encoder",
+    "input_dim": EMBEDDING_DIM,
+    "stack_dim": STACK_DIM,
+    "hidden_dim": HIDDEN_DIM,
+    "stack_type": "multipop",
+    "summary_size": 6,
   }
   else if ETYPE == "lstm" then {
     "type": "lstm",
@@ -34,16 +33,14 @@ local ENCODER =
 
 {
   "dataset_reader": {
-    "type": TASK,
-    "op_range": OP_RANGE,
-    "center_embed_prob": CENTER_EMBED_PROB,
+    "type": "eval",
   },
 
-  "train_data_path": "10000:6",
-  "validation_data_path": "1000:10",
+  "train_data_path": "50000:100",
+  "validation_data_path": "5000:200",
   
   "model": {
-    "type": "simple_tagger",
+    "type": "language_model",
 
     "text_field_embedder": {
       "token_embedders": {
@@ -54,29 +51,23 @@ local ENCODER =
       },
     },
 
-    "encoder": ENCODER,
+    "contextualizer": ENCODER,
 
   },
 
   "iterator": {
       "type": "bucket",
-      "sorting_keys": [["tokens", "num_tokens"]],
+      "sorting_keys": [["source", "num_tokens"]],
       "batch_size": BATCH_SIZE,
   },
   "trainer": {
       "optimizer": {
         "type": "adam",
       },
-      "learning_rate_scheduler": {
-        "type": "reduce_on_plateau",
-        "factor": 0.5,
-        "mode": "max",
-        "patience": 2
-      },
       "num_epochs": 300,
       "patience": 50,
       "cuda_device": 0,
-      "validation_metric": "+accuracy",
+      "validation_metric": "-perplexity",
       "num_serialized_models_to_keep": 1,
   }
 }

@@ -32,12 +32,15 @@ def save_dataset(dataset, path):
 # import pdb; pdb.set_trace()
 
 # Data generation settings for D2 adapted from Suzgun, et al. (2019).
-generator = DyckLanguage(num_pairs=2, p=.5, q=.25)
-train, _ = generator.generate_list(5000, 2, 50)
-valid, _ = generator.generate_list(5000, 52, 100)
-test, _ = generator.generate_list(5000, 52, 100)
+num_pairs = 5
+num_train = 50000
+num_eval = 5000
+generator = DyckLanguage(num_pairs=num_pairs, p=.5, q=.25)
+train, _ = generator.generate_list(num_train, 2, 50)
+valid, _ = generator.generate_list(num_eval, 52, 100)
+test, _ = generator.generate_list(num_eval, 52, 100)
 
-path = "/home/willm/data/dyck2"
+path = "/home/willm/data/dyck" + str(num_pairs)
 save_dataset(train, path + "/train.txt")
 save_dataset(valid, path + "/valid.txt")
 save_dataset(test, path + "/test.txt")

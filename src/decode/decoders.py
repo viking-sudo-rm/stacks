@@ -5,27 +5,27 @@ import numpy as np
 from src.decode.states import AbstractDecoderState, DyckDecoderState, ExpressionDecoderState
 
 
-def _get_state_type(state_type):
+def _get_initial_state(state_type):
     if state_type == "dyck":
-        return DyckDecoderState
-    elif state_type == "expression":
-        return ExpressionDecoderState
+        return DyckDecoderState.initial()
+    elif state_type == "reduce":
+        return ExpressionDecoderState.initial()
     else:
-        return state_type
+        raise ValueError("Unsupported state type.")
 
 
 def beam_decode(probabilities: np.ndarray,
                 state_type: str,
                 get_action: Callable[[int], int] = lambda x: x,
+                full: bool = True,
                 top_k: int = 3,
                 beam_size: int = 50) -> List[int]:
     """Do a beam search where we enforce counter constraints over the sequence."""
     # Construct a beam of decoder states.
-    state_type = _get_state_type(state_type)
-    states = [state_type.initial()]
+    states = [_get_initial_state(state_type)]
     
     for idx in range(len(probabilities)):
-        final = idx == len(probabilities) - 1
+        final = full and (idx == len(probabilities) - 1)
 
         # The probability vector for this time step.
         probs = probabilities[idx, :]
@@ -51,12 +51,12 @@ def beam_decode(probabilities: np.ndarray,
 
 def greedy_decode(probabilities: np.ndarray,
                   state_type: str,
-                  get_action: Callable[[int], int] = lambda x: x) -> List[int]:
+                  get_action: Callable[[int], int] = lambda x: x,
+                  full: bool = True) -> List[int]:
     """Take the highest probability option that doesn't violate the constraints."""
-    state_type = _get_state_type(state_type)
-    state = state_type.initial()
+    state = _get_initial_state(state_type)
     for idx in range(len(probabilities)):
-        final = idx == len(probabilities) - 1
+        final = full and (idx == len(probabilities) - 1)
         probs = probabilities[idx, :]
         actions = np.argsort(probs)
         for action_idx in reversed(actions):

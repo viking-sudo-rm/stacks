@@ -13,6 +13,7 @@ class AbstractDecoderState(metaclass=ABCMeta):
     def get_actions(self):
         actions = []
         state = self
+        # If state.parent is None, then we are in the initial state.
         while state.parent is not None:
             actions.insert(0, state.action)
             state = state.parent
@@ -39,6 +40,7 @@ class ExpressionDecoderState(AbstractDecoderState):
     @overrides
     def transition(self, idx: int, action: int, action_log_prob: float, final: bool):
         next_counter = self.counter + 1 - action
+        # FIXME: Perhaps think about how to deal with final transitions better.
         if not final and next_counter < 1:
             # We never want to reduce more than the number of constituents.
             return None
@@ -65,7 +67,7 @@ class DyckDecoderState(AbstractDecoderState):
             # We never want to reduce more than the number of constituents.
             return None
         elif final and next_counter != 0:
-            # At the final configuration, we need exactly one constituent left.
+            # At a final configuration, we need exactly one constituent left to get a full tree.
             return None
         else:
             return DyckDecoderState(action=action,

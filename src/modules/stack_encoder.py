@@ -1,13 +1,18 @@
 from overrides import overrides
 import torch
 
-from allennlp.modules import FeedForward
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 
-from stacknn.superpos import Stack
+from stacknn.superpos import Stack, NoOpStack, MultiPopStack
 from stacknn.utils.expectation import get_expectation
 
-from src.modules.suzgun_controller import SuzgunRnnController
+from src.modules.suzgun_controller import SuzgunRnnController, SuzgunRnnCellController
+
+_STACK_TYPES = {
+    "basic": Stack,
+    "noop": NoOpStack,
+    "multipop": MultiPopStack,
+}
 
 
 def get_action(logits):
@@ -22,11 +27,24 @@ class StackEncoder(Seq2SeqEncoder):
                  input_dim: int,
                  stack_dim: int,
                  hidden_dim: int,
-                 store_policies: bool = False):
+                 stack_type: str = "basic",
+                 summary_size: int = 1,
+                 dropout: float = 0.,
+                 store_policies: bool = False,
+                 lstm_controller: bool = False):
         super().__init__()
         self.stack_dim = stack_dim
-        self.stack_type = Stack
-        self.controller = SuzgunRnnController(input_dim, stack_dim, hidden_dim)
+        self.stack_type = _STACK_TYPES[stack_type]
+        self.summary_size = summary_size
+        self.summary_dim = summary_size * stack_dim
+        
+        if lstm_controller:
+            self.controller = SuzgunRnnCellController(input_dim, self.summary_dim, hidden_dim,
+                                                      rnn_cell_type=torch.nn.LSTMCell,
+                                                      dropout=dropout)
+        else:
+            self.controller = SuzgunRnnController(input_dim, self.summary_dim, hidden_dim,
+                                                  dropout=dropout)
 
         # TODO: Replace these parameters with controller.get_input_dim(), etc.
         self.input_dim = input_dim
@@ -43,7 +61,7 @@ class StackEncoder(Seq2SeqEncoder):
     def forward(self, inputs, mask):
         batch_size, seq_len, _ = inputs.size()
         stacks = self.stack_type.empty(batch_size, self.stack_dim, device=inputs.device)
-        summaries = torch.zeros(batch_size, self.stack_dim, device=inputs.device)
+        summaries = torch.zeros(batch_size, self.summary_dim, device=inputs.device)
         self.controller.reset(batch_size, device=inputs.device)
 
         all_states = []
@@ -59,7 +77,17 @@ class StackEncoder(Seq2SeqEncoder):
 
             # Update the stack and compute the next summary.
             stacks.update(policies, vectors)
-            summaries = stacks.tapes[:, 0, :]
+            if self.summary_size == 1:
+                summaries = stacks.tapes[:, 0, :]
+            else:
+                tapes = stacks.tapes[:, :self.summary_size, :]
+                length = tapes.size(1)
+                if length < self.summary_size:
+                    # If necessary, we pad the summaries with zeros.
+                    summaries = torch.zeros(batch_size, self.summary_size, self.stack_dim,
+                                            device=inputs.device)
+                    summaries[:, :length, :] = tapes
+                summaries = torch.flatten(summaries, start_dim=1)
 
             # Optionally store the policies at inference time.
             if self.store_policies:

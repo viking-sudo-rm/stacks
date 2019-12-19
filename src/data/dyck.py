@@ -9,8 +9,6 @@ from allennlp.data.fields import TextField, SequenceLabelField
 from allennlp.data.tokenizers import Token
 from allennlp.data.token_indexers import SingleIdTokenIndexer
 
-sys.setrecursionlimit(1000000)
-
 
 @DatasetReader.register("dyck")
 class DyckReader(DatasetReader):
