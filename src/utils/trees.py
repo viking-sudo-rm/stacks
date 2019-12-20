@@ -99,7 +99,7 @@ def from_left_distances(sentence, left_dists):
                 return None
             const = [stack.pop(), const]
         stack.append(const)
-    return stack[-1]
+    return stack[-1], stack
 
 
 def from_right_distances(sentence, right_dists):

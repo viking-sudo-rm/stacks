@@ -1,8 +1,9 @@
 import torch
 
-from allennlp.models import LanguageModel, BasicClassifier, SimpleTagger
-
 from src.modules.compose import ComposeEncoder
+
+
+_ENCODER_NAMES = ["_contextualizer", "_seq2seq_encoder", "encoder"]
 
 
 class PolicyListener:
@@ -19,14 +20,13 @@ def get_policies(model, instances, policies_name: str = "all_policies"):
     """Get the action dists from a model."""
 
     # We support multiple model types.
-    if isinstance(model, LanguageModel):
-        encoder = model._contextualizer
-    elif isinstance(model, BasicClassifier):
-        encoder = model._seq2seq_encoder
-    elif isinstance(model, SimpleTagger):
-        encoder = model.encoder
-    else:
-        raise ValueError("Unsupported model type.")
+    encoder = None
+    for name in _ENCODER_NAMES:
+        encoder = getattr(model, name, None)
+        if encoder is not None:
+            break
+    if encoder is None:
+        raise ValueError("Unsupported model.")
 
     # For multiple encoders, assume we are composing a contextualizer with a final stack layer.
     if isinstance(encoder, ComposeEncoder):

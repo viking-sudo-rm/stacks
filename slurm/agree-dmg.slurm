@@ -7,10 +7,10 @@
 #SBATCH --gpus=1
 
 source /home/willm/anaconda3/bin/activate allennlp
-conf=/home/willm/code/stacks/configs/agree.jsonnet
+conf=/home/willm/code/stacks/configs/agree-dmg.jsonnet
 
-encoder=dmg
-lstm=false  # Use an LSTM cell in the stack controller.
+encoder=dmg  # Should probably only use this script with DMG(-like) stuff.
+lstm=true  # Use an LSTM cell in the stack controller.
 
 if [ $lstm == "true" ]
 then

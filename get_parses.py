@@ -13,10 +13,14 @@ from src.data.dyck import DyckReader
 from src.data.eval import EvalReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
+from src.decode.minimalist_decoders import beam_dmg_decode, greedy_dmg_decode
+from src.models.expanding_classifier import ExpandingClassifier
 from src.modules.compose import ComposeEncoder
+from src.modules.minimalist_grammar_encoder import MinimalistGrammarEncoder
 from src.modules.stack_encoder import StackEncoder
 from src.utils.listener import get_policies
 from src.utils.trees import from_left_distances, to_syntax_tree
+from src.utils.minimalist import from_merges
 from src.utils.dyck import from_parentheses
 
 
@@ -25,6 +29,8 @@ def get_parse(tokens, actions, decoder_type):
         return from_parentheses(tokens, actions)
     elif decoder_type == "reduce":
         return from_left_distances(tokens, actions)
+    elif decoder_type == "dmg":
+        return from_merges(tokens, actions)
     else:
         raise ValueError("Unsupported decoder type.")
 
@@ -48,19 +54,28 @@ def main(args):
     all_policies = get_policies(model, instances, "all_policies")
     all_tokens = [[tok.text for tok in instance[args.tokens_name]] for instance in instances]
     for tokens, policies in zip(all_tokens, all_policies):
-        policies = policies[:len(tokens)]
+        # FIXME: Refactor this whole part. Logic is way too complicated and unorganized here.
+        # There should be ONE class that handles decoding and parsing for each type.
+
+        if args.decoder != "dmg":
+            policies = policies[:len(tokens)]
         full = not args.partial
+
         if args.beam is None:
-            actions = greedy_decode(policies, args.decoder, full=full)
+            actions = (greedy_dmg_decode(policies, len(tokens)) if args.decoder == "dmg" else
+                       greedy_decode(policies, args.decoder, full=full))
         else:
-            actions = beam_decode(policies, args.decoder, full=full,
-                                  beam_size=args.beam, top_k=args.top_k)
+            actions = (beam_dmg_decode(policies, len(tokens), beam_size=args.beam, top_k=args.top_k)
+                       if args.decoder == "dmg" else beam_decode(policies, args.decoder,
+                                                                 full=full,
+                                                                 beam_size=args.beam,
+                                                                 top_k=args.top_k))
 
         if actions == None:
             continue
 
         pairs = set(zip(tokens, actions))
-        parse = get_parse(tokens, actions, args.decoder)
+        parse, stack = get_parse(tokens, actions, args.decoder)
         output = to_syntax_tree(parse)
         import pdb; pdb.set_trace()
 
