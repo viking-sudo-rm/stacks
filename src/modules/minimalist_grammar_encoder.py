@@ -6,7 +6,7 @@ from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 from stacknn.superpos import MinimalistStack
 from stacknn.utils.expectation import get_expectation
 
-from src.modules.suzgun_controller import SuzgunRnnController, SuzgunRnnCellController
+from src.modules.controllers.rnn import SuzgunRnnController, SuzgunRnnCellController
 
 
 def get_action(logits):

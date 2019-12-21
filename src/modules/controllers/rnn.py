@@ -1,7 +1,11 @@
+from overrides import overrides
 import torch
 
+from src.modules.controllers.base import AbstractController
 
-class SuzgunRnnController(torch.nn.Module):
+
+@AbstractController.register("rnn")
+class SuzgunRnnController(AbstractController):
 
     def __init__(self,
                  input_dim: int,
@@ -17,9 +21,11 @@ class SuzgunRnnController(torch.nn.Module):
 
         self.dropout = torch.nn.Dropout(p=dropout)
 
+    @overrides
     def reset(self, batch_size: int, device: int):
         self.states = torch.zeros(batch_size, self.hidden_dim, device=device)
 
+    @overrides
     def forward(self, inputs, summaries):
         states = self.states + self.smap(summaries)
         self.states = torch.tanh(self.imap(inputs) + self.hmap(states))
@@ -27,7 +33,8 @@ class SuzgunRnnController(torch.nn.Module):
         return self.states
 
 
-class SuzgunRnnCellController(torch.nn.Module):
+@AbstractController.register("rnn-cell")
+class SuzgunRnnCellController(AbstractController):
 
     """RNN controller for a complex RNN type, i.e. LSTM/GRU."""
 
@@ -50,10 +57,12 @@ class SuzgunRnnCellController(torch.nn.Module):
         self.rnn_cell = rnn_cell_type(input_dim, hidden_dim)
         self.dropout = torch.nn.Dropout(p=dropout)
 
+    @overrides
     def reset(self, batch_size: int, device: int):
         self.states = torch.zeros(batch_size, self.hidden_dim, device=device)
         self.cells = torch.zeros(batch_size, self.hidden_dim, device=device)
 
+    @overrides
     def forward(self, inputs, summaries):
         states = self.states + self.smap(summaries)
         self.states, self.cells = self.rnn_cell(inputs, [states, self.cells])
