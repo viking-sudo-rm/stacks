@@ -6,11 +6,7 @@ from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 from stacknn.superpos import Stack, NoOpStack, MultiPopStack
 from stacknn.utils.expectation import get_expectation
 
-<<<<<<< HEAD
 from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
-=======
-from src.modules.controllers.rnn import SuzgunRnnController, SuzgunRnnCellController
->>>>>>> ff7d0455c7bcc183e87a0e34f21aad08015b9c16
 
 _STACK_TYPES = {
     "basic": Stack,
