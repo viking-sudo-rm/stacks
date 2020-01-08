@@ -74,6 +74,18 @@ local ENCODER =
       }
     },
   }
+  else if ETYPE == "dmg-lstm" then {
+    "type": "minimalist-grammar",
+    "stack_dim": STACK_DIM,
+    "controller": {
+      "type": "suzgun-generic-rnn",
+      "rnn_cell_type": "lstm",
+      "input_dim": EMBEDDING_DIM + CHAR_EMBEDDING_DIM,
+      "summary_dim": 2 * STACK_DIM,
+      "hidden_dim": HIDDEN_DIM,
+      "dropout": DROPOUT,
+    },
+  }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
 
 

@@ -2,19 +2,11 @@ from overrides import overrides
 import torch
 from overrides import overrides
 
-<<<<<<< HEAD:src/modules/controllers/suzgun.py
 from src.modules.controllers.base import StackController
 
 
 @StackController.register("suzgun-rnn")
 class SuzgunRnnController(StackController):
-=======
-from src.modules.controllers.base import AbstractController
-
-
-@AbstractController.register("rnn")
-class SuzgunRnnController(AbstractController):
->>>>>>> ff7d0455c7bcc183e87a0e34f21aad08015b9c16:src/modules/controllers/rnn.py
 
     def __init__(self,
                  input_dim: int,
@@ -55,14 +47,8 @@ class SuzgunRnnController(AbstractController):
     def get_output_dim(self):
         return self.hidden_dim
 
-<<<<<<< HEAD:src/modules/controllers/suzgun.py
-
 @StackController.register("suzgun-generic-rnn")
 class SuzgunRnnCellController(StackController):
-=======
-@AbstractController.register("rnn-cell")
-class SuzgunRnnCellController(AbstractController):
->>>>>>> ff7d0455c7bcc183e87a0e34f21aad08015b9c16:src/modules/controllers/rnn.py
 
     """RNN controller for a complex RNN type, i.e. LSTM/GRU."""
 
@@ -85,12 +71,9 @@ class SuzgunRnnCellController(AbstractController):
         self.smap = torch.nn.Linear(summary_dim, hidden_dim, bias=False)
         self.dropout = torch.nn.Dropout(p=dropout)
 
-<<<<<<< HEAD:src/modules/controllers/suzgun.py
         rnn_cell_type = self._RNN_TYPES[rnn_cell_type]
         self.rnn_cell = rnn_cell_type(input_dim, hidden_dim)
 
-=======
->>>>>>> ff7d0455c7bcc183e87a0e34f21aad08015b9c16:src/modules/controllers/rnn.py
     @overrides
     def reset(self, batch_size: int, device: int):
         self.states = torch.zeros(batch_size, self.hidden_dim, device=device)
