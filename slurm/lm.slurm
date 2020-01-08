@@ -10,14 +10,7 @@ source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/language-model.jsonnet
 
 dataset=penn
-encoder=lstm
-lstm=false  # Use an LSTM cell in the stack controller.
+encoder=dmg
+dir=/tmp/willm/${dataset}-$encoder
 
-if [ $lstm=="true" ]
-then
-    dir=/tmp/willm/${dataset}-${encoder}-lstm
-else
-    dir=/tmp/willm/${dataset}-$encoder
-fi
-
-DATASET=$dataset ENCODER=$encoder LSTM=$lstm allennlp train $conf -s $dir --include-package=src
+DATASET=$dataset ENCODER=$encoder allennlp train $conf -s $dir --include-package=src

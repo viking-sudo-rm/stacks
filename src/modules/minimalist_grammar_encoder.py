@@ -6,7 +6,8 @@ from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 from stacknn.superpos import MinimalistStack
 from stacknn.utils.expectation import get_expectation
 
-from src.modules.suzgun_controller import SuzgunRnnController, SuzgunRnnCellController
+from src.modules.controllers import StackController
+from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
 
 
 def get_action(logits):
@@ -17,31 +18,20 @@ def get_action(logits):
 @Seq2SeqEncoder.register("minimalist-grammar")
 class MinimalistGrammarEncoder(Seq2SeqEncoder):
 
-    SUMMARY_SIZE = 2
+    self.SUMMARY_SIZE = 2
 
     def __init__(self,
-                 input_dim: int,
                  stack_dim: int,
-                 hidden_dim: int,
-                 dropout: float = 0.,
-                 store_policies: bool = False,
-                 lstm_controller: bool = False):
-        super().__init__()
+                 controller: StackController,
+                 store_policies: bool = False):
+        super().__init__()        
+        self.controller = controller
         self.stack_dim = stack_dim
-        self.summary_dim = self.SUMMARY_SIZE * stack_dim
-        
-        if lstm_controller:
-            self.controller = SuzgunRnnCellController(input_dim, self.summary_dim, hidden_dim,
-                                                      rnn_cell_type=torch.nn.LSTMCell,
-                                                      dropout=dropout)
-        else:
-            self.controller = SuzgunRnnController(input_dim, self.summary_dim, hidden_dim,
-                                                  dropout=dropout)
-
-        # TODO: Replace these parameters with controller.get_input_dim(), etc.
-        self.input_dim = input_dim
-        self.output_dim = hidden_dim
+        self.summary_dim = self.controller.get_summary_dim()
         self.bidirectional = False
+
+        # Make sure the encoder stack size matches the controller summary size.
+        assert self.stack_dim * self.SUMMARY_SIZE == self.summary_dim
 
         self.policy = torch.nn.Linear(self.output_dim, MinimalistStack.get_num_actions())
         self.vectorizer = torch.nn.Linear(self.output_dim, stack_dim)
@@ -110,11 +100,11 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
 
     @overrides
     def get_input_dim(self) -> int:
-        return self.input_dim
+        return self.controller.get_input_dim()
 
     @overrides
     def get_output_dim(self) -> int:
-        return  self.output_dim
+        return  self.controller.get_output_dim()
 
     @overrides
     def is_bidirectional(self) -> bool:

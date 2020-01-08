@@ -19,7 +19,6 @@ local DATA_ROOT = "/net/nfs.corp/allennlp/willm/data";
 local DATASET = std.extVar("DATASET");
 
 # Encoder specified by command line arguments.
-local LSTM_CONTROLLER = std.extVar("LSTM");
 local ETYPE = std.extVar("ENCODER");
 local ENCODER = 
   if ETYPE == "basic" then {
@@ -28,7 +27,7 @@ local ENCODER =
     "stack_dim": STACK_DIM,
     "hidden_dim": HIDDEN_DIM,
     "dropout": DROPOUT,
-    "lstm_controller": LSTM_CONTROLLER,
+    "lstm_controller": false,
   }
   else if ETYPE == "multipop" then {
     "type": "stack-encoder",
@@ -38,7 +37,7 @@ local ENCODER =
     "stack_type": "multipop",
     "summary_size": 6,
     "dropout": DROPOUT,
-    "lstm_controller": LSTM_CONTROLLER,
+    "lstm_controller": false,
   }
   else if ETYPE == "lstm" then {
     "type": "lstm",
@@ -47,6 +46,17 @@ local ENCODER =
     "bidirectional": false,
     "num_layers": NUM_LAYERS,
     "dropout": DROPOUT,
+  }
+  else if ETYPE == "dmg" then {
+    "type": "minimalist-grammar",
+    "stack_dim": STACK_DIM,
+    "controller": {
+      "type": "suzgun-rnn-cell",
+      "input_dim": EMBEDDING_DIM + CHAR_EMBEDDING_DIM,
+      "summary_dim": 2 * STACK_DIM,
+      "hidden_dim": HIDDEN_DIM,
+      "dropout": DROPOUT,
+    },
   }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
 
