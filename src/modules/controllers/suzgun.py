@@ -47,7 +47,7 @@ class SuzgunRnnController(StackController):
         return self.hidden_dim
 
 
-@StackController.register("suzgun-rnn-cell")
+@StackController.register("suzgun-generic-rnn")
 class SuzgunRnnCellController(StackController):
 
     """RNN controller for a complex RNN type, i.e. LSTM/GRU."""

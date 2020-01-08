@@ -51,11 +51,27 @@ local ENCODER =
     "type": "minimalist-grammar",
     "stack_dim": STACK_DIM,
     "controller": {
-      "type": "suzgun-rnn-cell",
+      "type": "suzgun-rnn",
       "input_dim": EMBEDDING_DIM + CHAR_EMBEDDING_DIM,
       "summary_dim": 2 * STACK_DIM,
       "hidden_dim": HIDDEN_DIM,
       "dropout": DROPOUT,
+    },
+  }
+  else if ETYPE == "dmg-ff" then {
+    "type": "minimalist-grammar",
+    "stack_dim": STACK_DIM,
+    "controller": {
+      "type": "feedforward",
+      "input_dim": EMBEDDING_DIM + CHAR_EMBEDDING_DIM,
+      "summary_dim": 2 * STACK_DIM,
+      "feedforward": {
+        "input_dim": EMBEDDING_DIM + CHAR_EMBEDDING_DIM + 2 * STACK_DIM,
+        "num_layers": 2,
+        "hidden_dims": HIDDEN_DIM,
+        "activations": ["relu", "tanh"],
+        "dropout": DROPOUT,
+      }
     },
   }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);

@@ -1,6 +1,6 @@
 import torch
 
-from src.modules.compose import ComposeEncoder
+from allennlp.modules.seq2seq_encoders import ComposeEncoder
 
 
 _ENCODER_NAMES = ["_contextualizer", "_seq2seq_encoder", "encoder"]

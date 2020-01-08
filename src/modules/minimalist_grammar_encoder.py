@@ -7,7 +7,6 @@ from stacknn.superpos import MinimalistStack
 from stacknn.utils.expectation import get_expectation
 
 from src.modules.controllers import StackController
-from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
 
 
 def get_action(logits):
@@ -18,7 +17,7 @@ def get_action(logits):
 @Seq2SeqEncoder.register("minimalist-grammar")
 class MinimalistGrammarEncoder(Seq2SeqEncoder):
 
-    self.SUMMARY_SIZE = 2
+    SUMMARY_SIZE = 2
 
     def __init__(self,
                  stack_dim: int,
@@ -33,8 +32,9 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
         # Make sure the encoder stack size matches the controller summary size.
         assert self.stack_dim * self.SUMMARY_SIZE == self.summary_dim
 
-        self.policy = torch.nn.Linear(self.output_dim, MinimalistStack.get_num_actions())
-        self.vectorizer = torch.nn.Linear(self.output_dim, stack_dim)
+        output_dim = self.get_output_dim()
+        self.policy = torch.nn.Linear(output_dim, MinimalistStack.get_num_actions())
+        self.vectorizer = torch.nn.Linear(output_dim, stack_dim)
 
         self.all_policies = None
         self.store_policies = store_policies
@@ -53,12 +53,14 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
         input_dists = torch.zeros_like(mask)
         input_dists[:, 0, :] = 1.
 
+        all_input_dists = []
         all_states = []
         self.all_policies = []
         for _ in range(2 * seq_len - 1):
             # Update the controller state.
             superpos_inputs = torch.sum(input_dists * inputs, dim=1)
             states = self.controller(superpos_inputs, summaries)
+            all_input_dists.append(input_dists)
             all_states.append(states)
 
             # Compute a distribution over actions to take.
@@ -87,16 +89,23 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
         if self.store_policies:
             self.all_policies = torch.stack(self.all_policies, dim=1)
 
-        return torch.stack(all_states, dim=1)
+        return self._get_superpos_states(all_input_dists, all_states)
 
     def _shift_input(self, input_dists, policies, mask):
-        """Compute the next input distribution as a superposition of shifting and merging."""
+        """Compute the distribution for the next input position."""
         push_dists = torch.zeros_like(input_dists)
         push_dists[:, 1:, :] = input_dists[:, :-1, :]
         push_dists = push_dists * mask
         # Pushing shifts the input; merging preserves the current position.
         policies = policies.unsqueeze(-1).unsqueeze(-1)
         return policies[:, 0] * push_dists + policies[:, 1] * input_dists
+
+    def _get_superpos_states(self, all_input_dists, all_states):
+        """Return a superimposed output sequence of the same length as input."""
+        all_input_dists = torch.stack(all_input_dists, dim=2)  # [*, seq_len, num_steps, 1].
+        all_input_dists = all_input_dists.squeeze(-1)  # [*, seq_len, num_steps].
+        all_states = torch.stack(all_states, dim=1)  # [*, num_steps, hidden_dim].
+        return all_input_dists @ all_states
 
     @overrides
     def get_input_dim(self) -> int:
