@@ -27,7 +27,8 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
         self.controller = controller
         self.stack_dim = stack_dim
         self.summary_dim = self.controller.get_summary_dim()
-        self.bidirectional = False
+        # With the superposition pooling, this model can look ahead.
+        self.bidirectional = True
 
         # Make sure the encoder stack size matches the controller summary size.
         assert self.stack_dim * self.SUMMARY_SIZE == self.summary_dim

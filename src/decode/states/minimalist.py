@@ -25,16 +25,20 @@ class MinimalistDecoderState(AbstractDecoderState):
 
     @overrides
     def transition(self, idx: int, action: int, action_log_prob: float, length: int):
-        # Fixme: Ignore merges at zero depth?
         depth = self.depth + (1 if action == 0 else -1)
         num_pushes = self.num_pushes + int(action == 0)
         num_merges = self.num_merges + int(action == 1)
 
-        if num_pushes > length:
-            # Don't push more than the number of words.
+        # Can't merge when there are less than two things on the stack.
+        if depth < 2 and action == 1:
+          return None
+
+        # Can't push more than the number of words.
+        elif num_pushes > length:
             return None
+
+        # Can't merge more than n - 1 times.
         elif num_merges > length - 1:
-            # Don't merge more than n - 1 times.
             return None
 
         log_prob = self.log_prob + action_log_prob
