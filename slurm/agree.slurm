@@ -9,14 +9,7 @@
 source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/agree.jsonnet
 
-encoder=dmg
-lstm=false  # Use an LSTM cell in the stack controller.
+encoder=lstm
+dir=/tmp/willm/stacks/agree/$encoder
 
-if [ $lstm == "true" ]
-then
-    dir=/tmp/willm/agree-${encoder}-lstm
-else
-    dir=/tmp/willm/agree-$encoder
-fi
-
-ENCODER=$encoder LSTM=$lstm allennlp train $conf -s $dir --include-package=src
+ENCODER=$encoder allennlp train $conf -s $dir --include-package=src

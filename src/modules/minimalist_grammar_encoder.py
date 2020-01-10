@@ -17,21 +17,21 @@ def get_action(logits):
 @Seq2SeqEncoder.register("minimalist-grammar")
 class MinimalistGrammarEncoder(Seq2SeqEncoder):
 
-    SUMMARY_SIZE = 2
-
     def __init__(self,
                  stack_dim: int,
+                 summary_size: int,
                  controller: StackController,
                  store_policies: bool = False):
         super().__init__()        
         self.controller = controller
         self.stack_dim = stack_dim
+        self.summary_size = summary_size
         self.summary_dim = self.controller.get_summary_dim()
         # With the superposition pooling, this model can look ahead.
         self.bidirectional = True
 
         # Make sure the encoder stack size matches the controller summary size.
-        assert self.stack_dim * self.SUMMARY_SIZE == self.summary_dim
+        assert self.stack_dim * self.summary_size == self.summary_dim
 
         output_dim = self.get_output_dim()
         self.policy = torch.nn.Linear(output_dim, MinimalistStack.get_num_actions())
@@ -69,17 +69,8 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
             vectors = torch.sigmoid(self.vectorizer(states))
             stacks.update(policies, vectors)
 
-            # Compute the summary of the modified stack.
-            tapes = stacks.tapes[:, :self.SUMMARY_SIZE, :]
-            length = tapes.size(1)
-            if length < self.SUMMARY_SIZE:
-                # If necessary, we pad the summaries with zeros.
-                summaries = torch.zeros(batch_size, self.SUMMARY_SIZE, self.stack_dim,
-                                        device=inputs.device)
-                summaries[:, :length, :] = tapes
-            summaries = torch.flatten(summaries, start_dim=1)
-
-            # Update the position distribution over the input.
+            # Update the stack summary and input distribution.
+            summary = self._summarize(stacks)
             input_dists = self._shift_input(input_dists, policies, mask)
 
             # Optionally store the policies at inference time.
@@ -107,6 +98,20 @@ class MinimalistGrammarEncoder(Seq2SeqEncoder):
         all_input_dists = all_input_dists.squeeze(-1)  # [*, seq_len, num_steps].
         all_states = torch.stack(all_states, dim=1)  # [*, num_steps, hidden_dim].
         return all_input_dists @ all_states
+
+    # TODO: Add this as utility function to StackNN-Core.
+    def _summarize(self, stack):
+        """Compute the summary of the modified stack."""
+        summary = stack.tapes[:, :self.summary_size, :]
+        batch_size, length, stack_dim = summary.size()
+
+        if length < self.summary_size:
+            device = summary.device
+            padded_summary = torch.zeros(batch_size, self.summary_size, stack_dim, device=device)
+            padded_summary[:, :length, :] = summary
+            summary = padded_summary
+
+        return torch.flatten(summary, start_dim=1)
 
     @overrides
     def get_input_dim(self) -> int:

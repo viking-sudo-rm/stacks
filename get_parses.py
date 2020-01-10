@@ -14,7 +14,6 @@ from src.data.eval import EvalReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
 from src.decode.minimalist_decoders import beam_dmg_decode, greedy_dmg_decode
-from src.models.expanding_classifier import ExpandingClassifier
 from src.modules.minimalist_grammar_encoder import MinimalistGrammarEncoder
 from src.modules.stack_encoder import StackEncoder
 from src.utils.listener import get_policies

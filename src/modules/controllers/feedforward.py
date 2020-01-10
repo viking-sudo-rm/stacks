@@ -28,6 +28,7 @@ class FeedForwardController(StackController):
     @overrides
     def forward(self, inputs, summaries):
         features = torch.cat([inputs, summaries], dim=-1)
+        return self.feedforward(features)
 
     @overrides
     def get_input_dim(self):
