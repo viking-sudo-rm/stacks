@@ -15,7 +15,7 @@ def get_action(logits):
 
 
 @Seq2SeqEncoder.register("minimalist-grammar")
-class MinimalistGrammarEncoder(Seq2SeqEncoder):
+class MergeEncoder(Seq2SeqEncoder):
 
     def __init__(self,
                  stack_dim: int,
