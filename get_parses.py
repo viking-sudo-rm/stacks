@@ -92,7 +92,7 @@ def parse_args():
     parser.add_argument("--tokens_name", type=str, default="source")
     parser.add_argument("--decoder", type=str, default="multipop")
     parser.add_argument("--beam", type=int, default=None)
-    parser.add_argument("--top_k", type=int, default=6)
+    parser.add_argument("--top_k", type=int, default=10)
     parser.add_argument("--full", action="store_true")
     return parser.parse_args()
 

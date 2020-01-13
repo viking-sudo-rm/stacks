@@ -13,7 +13,7 @@ def beam_decode(probabilities: np.ndarray,
                 state_type: DecoderState,
                 get_action: _ActionGetter = lambda x: x,
                 enforce_full: bool = True,
-                top_k: int = 6,
+                top_k: int = 10,
                 beam_size: int = 50) -> List[int]:
     """Do a beam search where we enforce counter constraints over the sequence."""
     states = [state_type.initial()]  # Beam of decoder states.
