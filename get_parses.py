@@ -14,6 +14,8 @@ from src.data.eval import EvalReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
 from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState
+from src.modules.controllers.feedforward import FeedForwardController
+from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
 from src.modules.merge_encoder import MergeEncoder
 from src.modules.stack_encoder import StackEncoder
 from src.utils.listener import get_policies
@@ -56,26 +58,24 @@ def main(args):
     all_tokens = [[tok.text for tok in instance[args.tokens_name]] for instance in instances]
 
     decoder_type = DecoderState.by_name(args.decoder)
-    enforce_full = not args.partial
 
     for tokens, policies in zip(all_tokens, all_policies):
-        # FIXME: Refactor this whole part. Logic is way too complicated and unorganized here.
-        # There should be ONE class that handles decoding and parsing for each type.
-
         num_tokens = len(tokens)
 
         if args.decoder == _MERGE:
+            # This should be okay here, since our neural network controller is constrained to
+            # running this many times?
             policies = policies[:2 * num_tokens - 1]
         else:
             policies = policies[:num_tokens]
 
         if args.beam is None:
-            actions = greedy_decode(policies, num_tokens, decoder_type, enforce_full=enforce_full)
+            actions = greedy_decode(policies, num_tokens, decoder_type, enforce_full=args.full)
         else:
             actions = beam_decode(policies, num_tokens, decoder_type,
-                                  enforce_full=enforce_full,
+                                  enforce_full=args.full,
                                   top_k=args.top_k,
-                                  beam_size=args.beam_size)
+                                  beam_size=args.beam)
 
         if actions == None:
             continue
@@ -93,7 +93,7 @@ def parse_args():
     parser.add_argument("--decoder", type=str, default="multipop")
     parser.add_argument("--beam", type=int, default=None)
     parser.add_argument("--top_k", type=int, default=6)
-    parser.add_argument("--partial", action="store_true")
+    parser.add_argument("--full", action="store_true")
     return parser.parse_args()
 
 

@@ -43,6 +43,22 @@ local ENCODER =
       "hidden_dim": HIDDEN_DIM,
     },
   }
+  else if ETYPE == "kpop-ff" then {
+    "type": "stack-encoder",
+    "stack_dim": STACK_DIM,
+    "summary_size": SUMMMARY_SIZE,
+    "controller": {
+      "type": "feedforward",
+      "input_dim": EMBEDDING_DIM,
+      "summary_dim": SUMMARY_DIM,
+      "feedforward": {
+        "input_dim": EMBEDDING_DIM + SUMMARY_DIM,
+        "num_layers": 2,
+        "hidden_dims": HIDDEN_DIM,
+        "activations": ["relu", "tanh"],
+      }
+    },
+  }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
 
 

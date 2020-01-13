@@ -32,26 +32,25 @@ class MergeDecoderState(DecoderState):
                    length: int,  # The length of the sentence.
                    enforce_full: bool  # Constrain to only full trees.
                   ):
-        depth = self.depth + (1 if action == 0 else -1)
+        next_depth = self.depth + (1 if action == 0 else -1)
         num_pushes = self.num_pushes + int(action == 0)
         num_merges = self.num_merges + int(action == 1)
 
         # Can't merge when there are less than two things on the stack.
-        if depth < 2 and action == 1:
+        if self.depth < 2 and action == 1:
           return None
 
         # Can't push more than the number of words.
-        if enforce_full and num_pushes > length:
+        if num_pushes > length:
             return None
 
         # Can't merge more than n - 1 times.
         if enforce_full and num_merges > length - 1:
             return None
 
-        log_prob = self.log_prob + action_log_prob
         return MergeDecoderState(action=action,
-                                 log_prob=log_prob + action_log_prob,
+                                 log_prob=self.log_prob + action_log_prob,
                                  parent=self,
-                                 depth=depth,
+                                 depth=next_depth,
                                  num_pushes=num_pushes,
                                  num_merges=num_merges)

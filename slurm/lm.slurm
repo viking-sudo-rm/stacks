@@ -10,7 +10,7 @@ source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/language-model.jsonnet
 
 dataset=penn
-encoder=kpop-lstm
+encoder=kpop-ff
 dir=/tmp/willm/stacks/lm/${dataset}/$encoder
 
 DATASET=$dataset ENCODER=$encoder allennlp train $conf -s $dir --include-package=src
