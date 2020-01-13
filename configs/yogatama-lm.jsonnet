@@ -3,7 +3,7 @@ local EMBEDDING_DIM = 300;
 local CHAR_EMBEDDING_DIM = 50;
 local INPUT_DIM = EMBEDDING_DIM + CHAR_EMBEDDING_DIM;
 local HIDDEN_DIM = 650;
-local STACK_DIM = 128;
+local STACK_DIM = HIDDEN_DIM;
 local SUMMMARY_SIZE = 5;
 local SUMMARY_DIM = SUMMMARY_SIZE * STACK_DIM;
 
@@ -41,6 +41,7 @@ local ENCODER =
       "summary_dim": SUMMARY_DIM,
       "hidden_dim": HIDDEN_DIM,
     },
+    "project_states": false,
   }
   else if ETYPE == "kpop-ff" then {
     "type": "stack-encoder",
@@ -57,6 +58,7 @@ local ENCODER =
         "activations": ["relu", "tanh"],
       }
     },
+    "project_states": false,
   }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
 

@@ -52,7 +52,6 @@ def main(args):
 
     valid = reader.read(valid_file)
     instances = list(iter(valid))[:20]
-    # instances = [reader.text_to_instance(["+", "0", "1"])]
 
     all_policies = get_policies(model, instances, "all_policies")
     all_tokens = [[tok.text for tok in instance[args.tokens_name]] for instance in instances]

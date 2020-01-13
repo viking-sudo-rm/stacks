@@ -47,12 +47,20 @@ def greedy_decode(probabilities: np.ndarray,
     for idx in range(len(probabilities)):
         probs = probabilities[idx, :]
         actions = np.argsort(probs)
+
+        # Take the first action that is valid.
+        next_state = None
         for action_idx in reversed(actions):
             action_prob = probs[action_idx]
             action = get_action(action_idx)
             log_prob = log2(action_prob + np.finfo(float).eps)
             next_state = state.transition(idx, action, log_prob, num_tokens, enforce_full)
             if next_state is not None:
-                state = next_state
                 break
+
+        # If there is no valid action, return null.
+        if next_state is None:
+            return None
+        state = next_state
+
     return state.get_actions()

@@ -27,7 +27,9 @@ class StackEncoder(Seq2SeqEncoder):
                  stack_dim: int,
                  summary_size: int,
                  controller: StackController,
-                 store_policies: bool = False):
+                 store_policies: bool = False,
+                 project_states: bool = True,
+                 multipush: bool = False):
         super().__init__()
         self.stack_dim = stack_dim
         self.summary_size = summary_size
@@ -42,7 +44,12 @@ class StackEncoder(Seq2SeqEncoder):
 
         output_dim = self.get_output_dim()
         self.policy = torch.nn.Linear(output_dim, self.stack_type.get_num_actions())
-        self.vectorizer = torch.nn.Linear(output_dim, stack_dim)
+
+        if project_states:
+            self.vectorizer = torch.nn.Linear(output_dim, stack_dim)
+        else:
+            assert output_dim == stack_dim
+            self.vectorizer = None
 
     @overrides
     def forward(self, inputs, mask):
@@ -54,13 +61,11 @@ class StackEncoder(Seq2SeqEncoder):
         all_states = []
         self.all_policies = []
         for time_idx in range(seq_len):
-            # Update the controller state.
             states = self.controller(inputs[:, time_idx, :], summaries)
             all_states.append(states)
-
-            # Compute a distribution over actions to take.
             policies = torch.softmax(self.policy(states), dim=-1)
-            vectors = torch.sigmoid(self.vectorizer(states))
+            # FIXME: Is sigmoid okay here? Would tanh make a difference?
+            vectors = torch.sigmoid(self.vectorizer(states)) if self.vectorizer else states
 
             # Update the stack and compute the next summary.
             stacks.update(policies, vectors)
