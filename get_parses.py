@@ -13,7 +13,7 @@ from src.data.dyck import DyckReader
 from src.data.eval import EvalReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
-from src.decode.minimalist_decoders import beam_dmg_decode, greedy_dmg_decode
+from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState
 from src.modules.merge_encoder import MergeEncoder
 from src.modules.stack_encoder import StackEncoder
 from src.utils.listener import get_policies
@@ -22,12 +22,15 @@ from src.utils.minimalist import from_merges
 from src.utils.dyck import from_parentheses
 
 
+_MERGE = "merge"
+
+
 def get_parse(tokens, actions, decoder_type):
-    if decoder_type == "dyck":
+    if decoder_type == "push-pop":
         return from_parentheses(tokens, actions)
-    elif decoder_type == "reduce":
+    elif decoder_type == "multipop":
         return from_left_distances(tokens, actions)
-    elif decoder_type == "dmg":
+    elif decoder_type == "merge":
         return from_merges(tokens, actions)
     else:
         raise ValueError("Unsupported decoder type.")
@@ -51,23 +54,28 @@ def main(args):
 
     all_policies = get_policies(model, instances, "all_policies")
     all_tokens = [[tok.text for tok in instance[args.tokens_name]] for instance in instances]
+
+    decoder_type = DecoderState.by_name(args.decoder)
+    enforce_full = not args.partial
+
     for tokens, policies in zip(all_tokens, all_policies):
         # FIXME: Refactor this whole part. Logic is way too complicated and unorganized here.
         # There should be ONE class that handles decoding and parsing for each type.
 
-        if args.decoder != "dmg":
-            policies = policies[:len(tokens)]
-        full = not args.partial
+        num_tokens = len(tokens)
+
+        if args.decoder == _MERGE:
+            policies = policies[:2 * num_tokens - 1]
+        else:
+            policies = policies[:num_tokens]
 
         if args.beam is None:
-            actions = (greedy_dmg_decode(policies, len(tokens)) if args.decoder == "dmg" else
-                       greedy_decode(policies, args.decoder, full=full))
+            actions = greedy_decode(policies, num_tokens, decoder_type, enforce_full=enforce_full)
         else:
-            actions = (beam_dmg_decode(policies, len(tokens), beam_size=args.beam, top_k=args.top_k)
-                       if args.decoder == "dmg" else beam_decode(policies, args.decoder,
-                                                                 full=full,
-                                                                 beam_size=args.beam,
-                                                                 top_k=args.top_k))
+            actions = beam_decode(policies, num_tokens, decoder_type,
+                                  enforce_full=enforce_full,
+                                  top_k=args.top_k,
+                                  beam_size=args.beam_size)
 
         if actions == None:
             continue
@@ -82,7 +90,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_path", type=str)
     parser.add_argument("--tokens_name", type=str, default="source")
-    parser.add_argument("--decoder", type=str, default="dyck")
+    parser.add_argument("--decoder", type=str, default="multipop")
     parser.add_argument("--beam", type=int, default=None)
     parser.add_argument("--top_k", type=int, default=6)
     parser.add_argument("--partial", action="store_true")

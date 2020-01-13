@@ -9,7 +9,7 @@
 source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/agree.jsonnet
 
-encoder=lstm
+encoder=merge
 dir=/tmp/willm/stacks/agree/$encoder
 
 ENCODER=$encoder allennlp train $conf -s $dir --include-package=src

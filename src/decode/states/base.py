@@ -1,11 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
+from allennlp.common.registrable import Registrable
 
-class AbstractDecoderState(metaclass=ABCMeta):
 
-    def __init__(self, action, counter, log_prob, parent):
+class DecoderState(Registrable, metaclass=ABCMeta):
+
+    def __init__(self, action: int, log_prob: float, parent):
         self.action = action
-        self.counter = counter
         self.log_prob = log_prob
         self.parent = parent
 
@@ -24,5 +25,11 @@ class AbstractDecoderState(metaclass=ABCMeta):
         return NotImplemented
 
     @abstractmethod
-    def transition(self, idx: int, action: int, action_log_prob: float, final: bool):
+    def transition(self,
+                   idx: int,  # The index of the current action.
+                   action: int,  # The value of the current action.
+                   action_log_prob: float,  # The log-probability of the current action.
+                   length: int,  # The length of the sentence.
+                   enforce_full: bool  # Constrain to only full trees.
+                  ):
         return NotImplemented

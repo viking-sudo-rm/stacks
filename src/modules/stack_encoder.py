@@ -6,7 +6,7 @@ from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 from stacknn.superpos import Stack, NoOpStack, MultiPopStack
 from stacknn.utils.expectation import get_expectation
 
-from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
+from src.modules.controllers import StackController
 
 _STACK_TYPES = {
     "basic": Stack,
@@ -24,38 +24,25 @@ def get_action(logits):
 class StackEncoder(Seq2SeqEncoder):
 
     def __init__(self,
-                 input_dim: int,
                  stack_dim: int,
-                 hidden_dim: int,
-                 stack_type: str = "basic",
-                 summary_size: int = 1,
-                 dropout: float = 0.,
-                 store_policies: bool = False,
-                 lstm_controller: bool = False):
+                 summary_size: int,
+                 controller: StackController,
+                 store_policies: bool = False):
         super().__init__()
         self.stack_dim = stack_dim
-        self.stack_type = _STACK_TYPES[stack_type]
         self.summary_size = summary_size
         self.summary_dim = summary_size * stack_dim
-        
-        if lstm_controller:
-            self.controller = SuzgunRnnCellController(input_dim, self.summary_dim, hidden_dim,
-                                                      rnn_cell_type=torch.nn.LSTMCell,
-                                                      dropout=dropout)
-        else:
-            self.controller = SuzgunRnnController(input_dim, self.summary_dim, hidden_dim,
-                                                  dropout=dropout)
 
-        # TODO: Replace these parameters with controller.get_input_dim(), etc.
-        self.input_dim = input_dim
-        self.output_dim = hidden_dim
+        self.controller = controller
+        self.stack_type = MultiPopStack
         self.bidirectional = False
-
-        self.policy = torch.nn.Linear(self.output_dim, self.stack_type.get_num_actions())
-        self.vectorizer = torch.nn.Linear(self.output_dim, stack_dim)
 
         self.all_policies = None
         self.store_policies = store_policies
+
+        output_dim = self.get_output_dim()
+        self.policy = torch.nn.Linear(output_dim, self.stack_type.get_num_actions())
+        self.vectorizer = torch.nn.Linear(output_dim, stack_dim)
 
     @overrides
     def forward(self, inputs, mask):
@@ -101,11 +88,11 @@ class StackEncoder(Seq2SeqEncoder):
 
     @overrides
     def get_input_dim(self) -> int:
-        return self.input_dim
+        return self.controller.get_input_dim()
 
     @overrides
     def get_output_dim(self) -> int:
-        return  self.output_dim
+        return  self.controller.get_output_dim()
 
     @overrides
     def is_bidirectional(self) -> bool:

@@ -8,7 +8,6 @@ local SUMMARY_DIM = SUMMMARY_SIZE * STACK_DIM;
 # Optimization hyperparameters.
 local BATCH_SIZE = 16;
 local PATIENCE = 10;
-local DROPOUT = 0.5;
 local EMBED_DROPOUT = 0.5;
 
 # Path to the data on the file system.
@@ -22,9 +21,8 @@ local ENCODER =
     "input_size": EMBEDDING_DIM,
     "hidden_size": HIDDEN_DIM,
     "bidirectional": false,
-    "dropout": DROPOUT,
   }
-  else if ETYPE == "dmg" then {
+  else if ETYPE == "merge" then {
     "type": "minimalist-grammar",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
@@ -33,10 +31,9 @@ local ENCODER =
       "input_dim": EMBEDDING_DIM,
       "summary_dim": SUMMARY_DIM,
       "hidden_dim": HIDDEN_DIM,
-      "dropout": DROPOUT,
     },
   }
-  else if ETYPE == "dmg-ff" then {
+  else if ETYPE == "merge-ff" then {
     "type": "minimalist-grammar",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
@@ -49,11 +46,10 @@ local ENCODER =
         "num_layers": 2,
         "hidden_dims": HIDDEN_DIM,
         "activations": ["relu", "tanh"],
-        "dropout": DROPOUT,
       }
     },
   }
-  else if ETYPE == "dmg-lstm" then {
+  else if ETYPE == "merge-lstm" then {
     "type": "minimalist-grammar",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
@@ -63,7 +59,18 @@ local ENCODER =
       "input_dim": EMBEDDING_DIM,
       "summary_dim": SUMMARY_DIM,
       "hidden_dim": HIDDEN_DIM,
-      "dropout": DROPOUT,
+    },
+  }
+  else if ETYPE == "kpop-lstm" then {
+    "type": "stack-encoder",
+    "stack_dim": STACK_DIM,
+    "summary_size": SUMMMARY_SIZE,
+    "controller": {
+      "type": "suzgun-generic-rnn",
+      "rnn_cell_type": "lstm",
+      "input_dim": EMBEDDING_DIM,
+      "summary_dim": SUMMARY_DIM,
+      "hidden_dim": HIDDEN_DIM,
     },
   }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
