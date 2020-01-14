@@ -8,12 +8,6 @@ from stacknn.utils.expectation import get_expectation
 
 from src.modules.controllers import StackController
 
-# _STACK_TYPES = {
-#     "basic": Stack,
-#     "noop": NoOpStack,
-#     "multipop": MultiPopStack,
-# }
-
 
 def get_action(logits):
     dists = torch.softmax(logits, dim=-1)

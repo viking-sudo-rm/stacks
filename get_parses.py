@@ -77,6 +77,7 @@ def main(args):
                                   beam_size=args.beam)
 
         if actions == None:
+            print("Skipping null parse.")
             continue
 
         pairs = set(zip(tokens, actions))
