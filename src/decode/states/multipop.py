@@ -9,7 +9,7 @@ class MultipopDecoderState(DecoderState):
     """A decoder state describing an expression-like parsing scheme capable of closing multiple
     constituents per word.
 
-    Action nums: -1=INIT, k=REDUCE(k) for 0<=k
+    Action meanings: k=REDUCE(k) for 0<=k.
     """
 
     def __init__(self, action: int, log_prob: float, parent, depth: int):

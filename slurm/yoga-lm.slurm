@@ -10,7 +10,7 @@ source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/yogatama-lm.jsonnet
 
 dataset=penn
-encoder=kpop-ff
+encoder=kpush-ff
 dir=/tmp/willm/stacks/yoga-lm/${dataset}/$encoder
 
 DATASET=$dataset ENCODER=$encoder allennlp train $conf -s $dir --include-package=src

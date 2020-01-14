@@ -3,16 +3,16 @@ import torch
 
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 
-from stacknn.superpos import Stack, NoOpStack, MultiPopStack
+from stacknn.superpos import Stack, NoOpStack, MultiPopStack, MultiPushStack
 from stacknn.utils.expectation import get_expectation
 
 from src.modules.controllers import StackController
 
-_STACK_TYPES = {
-    "basic": Stack,
-    "noop": NoOpStack,
-    "multipop": MultiPopStack,
-}
+# _STACK_TYPES = {
+#     "basic": Stack,
+#     "noop": NoOpStack,
+#     "multipop": MultiPopStack,
+# }
 
 
 def get_action(logits):
@@ -27,6 +27,7 @@ class StackEncoder(Seq2SeqEncoder):
                  stack_dim: int,
                  summary_size: int,
                  controller: StackController,
+                 num_actions: int = 6,
                  store_policies: bool = False,
                  project_states: bool = True,
                  multipush: bool = False):
@@ -36,14 +37,14 @@ class StackEncoder(Seq2SeqEncoder):
         self.summary_dim = summary_size * stack_dim
 
         self.controller = controller
-        self.stack_type = MultiPopStack
-        self.bidirectional = False
+        stack_type = MultiPopStack if not multipush else MultiPushStack
+        self.stacks = stack_type(stack_dim, num_actions)
 
         self.all_policies = None
         self.store_policies = store_policies
 
         output_dim = self.get_output_dim()
-        self.policy = torch.nn.Linear(output_dim, self.stack_type.get_num_actions())
+        self.policy = torch.nn.Linear(output_dim, num_actions)
 
         if project_states:
             self.vectorizer = torch.nn.Linear(output_dim, stack_dim)
@@ -54,9 +55,9 @@ class StackEncoder(Seq2SeqEncoder):
     @overrides
     def forward(self, inputs, mask):
         batch_size, seq_len, _ = inputs.size()
-        stacks = self.stack_type.empty(batch_size, self.stack_dim, device=inputs.device)
-        summaries = torch.zeros(batch_size, self.summary_dim, device=inputs.device)
+        self.stacks.reset(batch_size, device=inputs.device)
         self.controller.reset(batch_size, device=inputs.device)
+        summaries = torch.zeros(batch_size, self.summary_dim, device=inputs.device)
 
         all_states = []
         self.all_policies = []
@@ -68,11 +69,11 @@ class StackEncoder(Seq2SeqEncoder):
             vectors = torch.sigmoid(self.vectorizer(states)) if self.vectorizer else states
 
             # Update the stack and compute the next summary.
-            stacks.update(policies, vectors)
+            self.stacks.update(policies, vectors)
             if self.summary_size == 1:
-                summaries = stacks.tapes[:, 0, :]
+                summaries = self.stacks.tapes[:, 0, :]
             else:
-                tapes = stacks.tapes[:, :self.summary_size, :]
+                tapes = self.stacks.tapes[:, :self.summary_size, :]
                 length = tapes.size(1)
                 if length < self.summary_size:
                     # If necessary, we pad the summaries with zeros.
@@ -101,4 +102,4 @@ class StackEncoder(Seq2SeqEncoder):
 
     @overrides
     def is_bidirectional(self) -> bool:
-        return self.bidirectional
+        return False

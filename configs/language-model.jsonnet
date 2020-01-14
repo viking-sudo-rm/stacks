@@ -34,6 +34,7 @@ local ENCODER =
     "type": "stack-encoder",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
+    "num_actions": SUMMMARY_SIZE,
     "controller": {
       "type": "suzgun-generic-rnn",
       "rnn_cell_type": "lstm",
@@ -46,6 +47,7 @@ local ENCODER =
     "type": "stack-encoder",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
+    "num_actions": SUMMMARY_SIZE,
     "controller": {
       "type": "feedforward",
       "input_dim": INPUT_DIM,

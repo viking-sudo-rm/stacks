@@ -34,6 +34,7 @@ local ENCODER =
     "type": "stack-encoder",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
+    "num_actions": SUMMMARY_SIZE,
     "controller": {
       "type": "suzgun-generic-rnn",
       "rnn_cell_type": "lstm",
@@ -47,6 +48,7 @@ local ENCODER =
     "type": "stack-encoder",
     "stack_dim": STACK_DIM,
     "summary_size": SUMMMARY_SIZE,
+    "num_actions": SUMMMARY_SIZE,
     "controller": {
       "type": "feedforward",
       "input_dim": INPUT_DIM,
@@ -59,6 +61,40 @@ local ENCODER =
       }
     },
     "project_states": false,
+  }
+  else if ETYPE == "kpush-lstm" then {
+    "type": "stack-encoder",
+    "stack_dim": STACK_DIM,
+    "summary_size": SUMMMARY_SIZE,
+    "num_actions": SUMMMARY_SIZE,
+    "controller": {
+      "type": "suzgun-generic-rnn",
+      "rnn_cell_type": "lstm",
+      "input_dim": INPUT_DIM,
+      "summary_dim": SUMMARY_DIM,
+      "hidden_dim": HIDDEN_DIM,
+    },
+    "project_states": false,
+    "multipush": true,
+  }
+  else if ETYPE == "kpush-ff" then {
+    "type": "stack-encoder",
+    "stack_dim": STACK_DIM,
+    "summary_size": SUMMMARY_SIZE,
+    "num_actions": SUMMMARY_SIZE,
+    "controller": {
+      "type": "feedforward",
+      "input_dim": INPUT_DIM,
+      "summary_dim": SUMMARY_DIM,
+      "feedforward": {
+        "input_dim": INPUT_DIM + SUMMARY_DIM,
+        "num_layers": 2,
+        "hidden_dims": HIDDEN_DIM,
+        "activations": ["relu", "tanh"],
+      }
+    },
+    "project_states": false,
+    "multipush": true,
   }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
 
