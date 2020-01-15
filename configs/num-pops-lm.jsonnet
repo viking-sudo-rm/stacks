@@ -17,7 +17,10 @@ local CHAR_DROPOUT = 0.5;
 local EMBED_DROPOUT = 0.4;
 local CONT_DROPOUT = 0.1;
 
-local POPS_WEIGHT = 1.0;
+# Parameters about fixing the stack action distribution.
+local POPS_WEIGHT = std.extVar("POPS");
+local PRIOR_WEIGHT = std.extVar("PRIOR");
+local PRIOR_DISTRIBUTION = [0.72, 0.08, 0.07, 0.03, 0.02, 0.01];
 
 # Path to the data on the file system.
 local DATA_ROOT = "/net/nfs.corp/allennlp/willm/data";
@@ -85,7 +88,10 @@ local ENCODER =
   
   "model": {
     "type": "num-pops-lm",
+
     "pops_weight": POPS_WEIGHT,
+    "prior_weight": PRIOR_WEIGHT,
+    "prior_distribution": PRIOR_DISTRIBUTION,
 
     "text_field_embedder": {
       "token_embedders": {

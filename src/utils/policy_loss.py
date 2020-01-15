@@ -10,3 +10,12 @@ def get_expected_num_pops(policies: torch.FloatTensor,
 
     exp_actions = torch.sum(policies * actions, dim=-1)
     return torch.sum(exp_actions * mask, dim=-1)
+
+
+def get_variational_loss(policies: torch.FloatTensor,  # [*, seq_len, num_actions].
+                         prior_distribution: torch.FloatTensor,  # [num_actions].
+                        ) -> torch.FloatTensor:
+    q = policies
+    p = prior_distribution
+    kl_divs = (q * (q / p).log()).sum(dim=-1)
+    return torch.mean(kl_divs)

@@ -11,6 +11,10 @@ conf=/home/willm/code/stacks/configs/num-pops-lm.jsonnet
 
 dataset=penn
 encoder=kpop-lstm
-dir=/tmp/willm/stacks/num-pops-lm/${dataset}/$encoder
+pops_weight=0.0
+prior_weight=1.0
 
-DATASET=$dataset ENCODER=$encoder allennlp train $conf -s $dir --include-package=src
+dir=/tmp/willm/stacks/num-pops-lm/${dataset}/${encoder}-var1
+
+POPS=$pops_weight PRIOR=$prior_weight DATASET=$dataset ENCODER=$encoder allennlp train \
+    $conf -s $dir --include-package=src
