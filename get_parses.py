@@ -14,6 +14,7 @@ from src.data.eval import EvalReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
 from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState
+from src.models.num_pops_lm import NumPopsLanguageModel
 from src.modules.controllers.feedforward import FeedForwardController
 from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
 from src.modules.merge_encoder import MergeEncoder

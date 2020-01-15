@@ -11,7 +11,7 @@ from allennlp.nn.util import get_text_field_mask
 from allennlp.nn import InitializerApplicator, RegularizerApplicator
 
 from src.modules.stack_encoder import StackEncoder
-from src.utils.count_pops import get_expected_num_pops
+from src.utils.policy_loss import get_expected_num_pops
 
 
 @Model.register("num-pops-lm")
