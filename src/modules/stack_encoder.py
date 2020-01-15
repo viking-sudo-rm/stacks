@@ -39,12 +39,13 @@ class StackEncoder(Seq2SeqEncoder):
 
         self.all_policies = None
         self.store_policies = store_policies
-        self.policy = torch.nn.Linear(output_dim, num_actions)
+        self.policy = torch.nn.Linear(self.output_dim, num_actions)
 
         if project_states:
-            self.vectorizer = torch.nn.Linear(output_dim, stack_dim)
+            self.vectorizer = torch.nn.Linear(self.output_dim, stack_dim)
         else:
-            assert output_dim == stack_dim
+            assert self.output_dim == stack_dim, \
+                "Without a state projection, output_dim and stack_dim need to match."
             self.vectorizer = None
 
         self.dropout = torch.nn.Dropout(dropout)
