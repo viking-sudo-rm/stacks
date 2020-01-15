@@ -40,6 +40,7 @@ class NumPopsLanguageModel(LanguageModel):
         assert contextualizer.store_policies, "StackEncoder needs to store its policies."
 
         self.criterion = torch.nn.MSELoss()
+        self.pops_weight = pops_weight
 
     def forward(  # type: ignore
         self, source: Dict[str, torch.LongTensor], lengths: torch.LongTensor,
