@@ -1,6 +1,5 @@
 from overrides import overrides
 import torch
-from overrides import overrides
 
 from src.modules.controllers.base import StackController
 
@@ -32,15 +31,15 @@ class SuzgunRnnController(StackController):
         return self.states
 
     @overrides
-    def get_input_dim(self):
+    def get_input_dim(self) -> int:
         return self.input_dim
 
     @overrides
-    def get_summary_dim(self):
+    def get_summary_dim(self) -> int:
         return self.summary_dim
 
     @overrides
-    def get_output_dim(self):
+    def get_output_dim(self) -> int:
         return self.hidden_dim
 
 @StackController.register("suzgun-generic-rnn")
@@ -80,13 +79,13 @@ class SuzgunRnnCellController(StackController):
         return self.states
 
     @overrides
-    def get_input_dim(self):
+    def get_input_dim(self) -> int:
         return self.input_dim
 
     @overrides
-    def get_summary_dim(self):
+    def get_summary_dim(self) -> int:
         return self.summary_dim
 
     @overrides
-    def get_output_dim(self):
+    def get_output_dim(self) -> int:
         return self.hidden_dim
