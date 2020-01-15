@@ -11,10 +11,11 @@ local SUMMARY_DIM = SUMMMARY_SIZE * STACK_DIM;
 # Refer to https://github.com/viking-sudo-rm/bert-parsing/blob/master/configs/language-modeling/ptb.jsonnet
 local BATCH_SIZE = 16;
 local PATIENCE = 10;
+local OPTIMIZER = "adam";
+local WEIGHT_DECAY = 5e-6;
 local CHAR_DROPOUT = 0.5;
-local EMBED_DROPOUT = 0.5;
-# local DROPOUT = 0.5;
-local WEIGHT_DECAY = 1.2e-6;
+local EMBED_DROPOUT = 0.4;
+local CONT_DROPOUT = 0.1;
 
 # Path to the data on the file system.
 local DATA_ROOT = "/net/nfs.corp/allennlp/willm/data";
@@ -42,6 +43,7 @@ local ENCODER =
       "summary_dim": SUMMARY_DIM,
       "hidden_dim": HIDDEN_DIM,
     },
+    "dropout": CONT_DROPOUT,
     "project_states": false,
   }
   else if ETYPE == "kpop-ff" then {
@@ -58,8 +60,9 @@ local ENCODER =
         "num_layers": 2,
         "hidden_dims": HIDDEN_DIM,
         "activations": ["relu", "tanh"],
-      }
+      },
     },
+    "dropout": CONT_DROPOUT,
     "project_states": false,
   }
   else if ETYPE == "kpush-lstm" then {
@@ -74,6 +77,7 @@ local ENCODER =
       "summary_dim": SUMMARY_DIM,
       "hidden_dim": HIDDEN_DIM,
     },
+    "dropout": CONT_DROPOUT,
     "project_states": false,
     "multipush": true,
   }
@@ -91,8 +95,9 @@ local ENCODER =
         "num_layers": 2,
         "hidden_dims": HIDDEN_DIM,
         "activations": ["relu", "tanh"],
-      }
+      },
     },
+    "dropout": CONT_DROPOUT,
     "project_states": false,
     "multipush": true,
   }
@@ -153,7 +158,7 @@ local ENCODER =
   },
   "trainer": {
     "optimizer": {
-      "type": "adam",
+      "type": OPTIMIZER,
       "weight_decay": WEIGHT_DECAY,
     },
     "num_epochs": 300,
