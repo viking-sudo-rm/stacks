@@ -8,6 +8,9 @@ from allennlp.data.fields import TextField
 from src.data.simple_lm import SimpleLmReader
 
 
+_TOKENS = ["hello", "world", "vossi", "vop", "."]
+
+
 class TestSimpleLmReader(AllenNlpTestCase):
     
     FIXTURES = pathlib.Path(__file__).parent / ".." / "fixtures"
@@ -51,18 +54,16 @@ class TestSimpleLmReader(AllenNlpTestCase):
         ]
         assert tags == expected_tags
 
-    def test_read_add_lengths(self):
+    def test_add_lengths(self):
         reader = SimpleLmReader(add_lengths=True)
-        lengths = [inst["lengths"].label for inst in reader.read(self.PATH)]
-        expected_lengths = [6, 4]
+        instance = reader.text_to_instance(_TOKENS)
+        lengths = instance["lengths"].label
+        expected_lengths = 5
         assert lengths == expected_lengths
 
     def test_read_reverse_tokens(self):
         reader = SimpleLmReader(reverse_tokens=True)
-        tags = [[t.text for t in inst["source"]] for inst in reader.read(self.PATH)]
-        expected_tags = [
-            ["this", "is", "a", "sentence", "though", "!"],
-            ["so", "is", "this", "."],
-        ]
-        expected_tags = [list(reversed(sent)) for sent in expected_tags]
-        assert tags == expected_tags
+        instance = reader.text_to_instance(_TOKENS)
+        tokens = [t.text for t in instance["source"]]
+        expected_tokens = list(reversed(_TOKENS))
+        assert tokens == expected_tokens
