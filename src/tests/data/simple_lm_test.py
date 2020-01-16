@@ -56,3 +56,13 @@ class TestSimpleLmReader(AllenNlpTestCase):
         lengths = [inst["lengths"].label for inst in reader.read(self.PATH)]
         expected_lengths = [6, 4]
         assert lengths == expected_lengths
+
+    def test_read_reverse_tokens(self):
+        reader = SimpleLmReader(reverse_tokens=True)
+        tags = [[t.text for t in inst["source"]] for inst in reader.read(self.PATH)]
+        expected_tags = [
+            ["this", "is", "a", "sentence", "though", "!"],
+            ["so", "is", "this", "."],
+        ]
+        expected_tags = [list(reversed(sent)) for sent in expected_tags]
+        assert tags == expected_tags

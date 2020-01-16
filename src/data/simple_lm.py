@@ -20,7 +20,8 @@ class SimpleLmReader(DatasetReader):
                  end_token: str = None,
                  min_length: int = 2,
                  two_fields: bool = False,
-                 add_lengths: bool = False):
+                 add_lengths: bool = False,
+                 reverse_tokens: bool = False):
         super().__init__(lazy=False)
         self._character_level = character_level
         self._start_token = start_token
@@ -28,6 +29,7 @@ class SimpleLmReader(DatasetReader):
         self._min_length = min_length
         self._two_fields = two_fields
         self._add_lengths = add_lengths
+        self._reverse_tokens = reverse_tokens
         self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
 
     @overrides
@@ -51,6 +53,9 @@ class SimpleLmReader(DatasetReader):
     @overrides
     def text_to_instance(self, tokens):
         fields = {}
+
+        if self._reverse_tokens:
+            tokens = list(reversed(tokens))
 
         if not self._two_fields:
             fields["source"] = TextField([Token(t) for t in tokens], self._token_indexers)

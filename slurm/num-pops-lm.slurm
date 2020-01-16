@@ -14,7 +14,7 @@ encoder=kpop-lstm
 pops_weight=0.0
 prior_weight=1.0
 
-dir=/tmp/willm/stacks/num-pops-lm/${dataset}/${encoder}-var1
+dir=/tmp/willm/stacks/num-pops-lm/${dataset}/${encoder}-0,1-rev
 
 POPS=$pops_weight PRIOR=$prior_weight DATASET=$dataset ENCODER=$encoder allennlp train \
     $conf -s $dir --include-package=src

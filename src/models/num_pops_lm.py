@@ -11,7 +11,7 @@ from allennlp.nn.util import get_text_field_mask
 from allennlp.nn import InitializerApplicator, RegularizerApplicator
 
 from src.modules.stack_encoder import StackEncoder
-from src.utils.policy_loss import get_expected_num_pops, get_variational_loss
+from src.utils.policy_loss import get_expected_num_pops, get_variational_terms
 
 
 @Model.register("num-pops-lm")
@@ -46,6 +46,11 @@ class NumPopsLanguageModel(LanguageModel):
         if prior_distribution is None:
             assert prior_weight == 0, "Must have prior_weight == 0 if prior_distribution is None."
 
+        num_actions = contextualizer.num_actions
+        length = len(prior_distribution)
+        assert num_actions == length, \
+            "num_actions (%d) must match len(prior_distribution) (%d)." % (num_actions, length)
+
         self.pops_weight = pops_weight
         self.prior_weight = prior_weight
         self.criterion = torch.nn.MSELoss()
@@ -60,10 +65,10 @@ class NumPopsLanguageModel(LanguageModel):
         self, source: Dict[str, torch.LongTensor], lengths: torch.LongTensor,
     ) -> Dict[str, torch.Tensor]:
         out_dict = super().forward(source)
+        mask = get_text_field_mask(source)
+        policies = self._contextualizer.all_policies
 
         if self.pops_weight > 0:
-            policies = self._contextualizer.all_policies
-            mask = get_text_field_mask(source)
             exp_num_pops = get_expected_num_pops(policies, mask)
             num_pops = lengths.float() - 1.
             pops_loss = self.criterion(exp_num_pops, num_pops)
@@ -71,12 +76,13 @@ class NumPopsLanguageModel(LanguageModel):
             pops_loss = 0.
 
         if self.prior_weight > 0:
-            prior_loss = get_variational_loss(policies, self.prior_distribution)
+            terms = get_variational_terms(policies, self.prior_distribution)
+            losses = torch.sum(terms * mask, dim=-1) / lengths.float()
+            prior_loss = torch.mean(losses)
         else:
             prior_loss = 0.
 
-        out_dict["lm_loss"] = out_dict["loss"]
-        out_dict["pops_loss"] = self.pops_weight * pops_loss
-        out_dict["prior_loss"] = self.prior_weight * prior_loss
-        out_dict["loss"] = out_dict["lm_loss"] + out_dict["pops_loss"] + out_dict["prior_loss"]
+        # TODO: Add these things as metrics.
+        lm_loss = out_dict["loss"]
+        out_dict["loss"] = lm_loss + self.pops_weight * pops_loss + self.prior_weight * prior_loss
         return out_dict

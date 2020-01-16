@@ -4,7 +4,7 @@ local CHAR_EMBEDDING_DIM = 50;
 local INPUT_DIM = EMBEDDING_DIM + CHAR_EMBEDDING_DIM;
 local HIDDEN_DIM = 650;
 local STACK_DIM = HIDDEN_DIM;
-local SUMMMARY_SIZE = 5;
+local SUMMMARY_SIZE = 7;
 local SUMMARY_DIM = SUMMMARY_SIZE * STACK_DIM;
 
 # Optimization hyperparameters.
@@ -20,7 +20,9 @@ local CONT_DROPOUT = 0.1;
 # Parameters about fixing the stack action distribution.
 local POPS_WEIGHT = std.extVar("POPS");
 local PRIOR_WEIGHT = std.extVar("PRIOR");
-local PRIOR_DISTRIBUTION = [0.72, 0.08, 0.07, 0.03, 0.02, 0.01];
+# local PRIOR_DISTRIBUTION = [0.72, 0.08, 0.07, 0.03, 0.02];
+local PRIOR_DISTRIBUTION = [0.27606, 0.52671, 0.16391, 0.02957, 0.00348, 0.00026, 0.00001];
+local REVERSE_TOKENS = true;
 
 # Path to the data on the file system.
 local DATA_ROOT = "/net/nfs.corp/allennlp/willm/data";
@@ -73,6 +75,7 @@ local ENCODER =
     "type": "simple_lm",
     "end_token": "<eos>",
     "add_lengths": true,
+    "reverse_tokens": REVERSE_TOKENS,
     "token_indexers": {
       "tokens": {
         "type": "single_id",
