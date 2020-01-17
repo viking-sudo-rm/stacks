@@ -9,6 +9,7 @@
 source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/eval.jsonnet
 
-encoder=multipop
-dir=/tmp/willm/eval-$encoder
-ENCODER=$encoder allennlp train $conf -s $dir --include-package=src
+encoder=kpop-lstm
+prior=0.5
+dir=/tmp/willm/stacks/eval/${encoder}-${prior}
+ENCODER=$encoder PRIOR=$prior allennlp train $conf -s $dir --include-package=src

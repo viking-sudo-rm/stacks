@@ -14,7 +14,7 @@ from src.data.eval import EvalReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
 from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState
-from src.models.num_pops_lm import NumPopsLanguageModel
+from src.models.policy_lm import PolicyLanguageModel
 from src.modules.controllers.feedforward import FeedForwardController
 from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
 from src.modules.merge_encoder import MergeEncoder
@@ -23,6 +23,7 @@ from src.utils.listener import get_policies
 from src.utils.trees import from_left_distances, to_syntax_tree
 from src.utils.minimalist import from_merges
 from src.utils.dyck import from_parentheses
+from src.utils.parse_eval import get_batched_f1
 
 
 _MERGE = "merge"
@@ -32,27 +33,16 @@ def get_parse(tokens, actions, decoder_type):
     if decoder_type == "push-pop":
         return from_parentheses(tokens, actions)
     elif decoder_type == "multipop":
-        return from_left_distances(tokens, actions)
+        return from_left_distances(tokens, actions, return_stack=True)
     elif decoder_type == "merge":
         return from_merges(tokens, actions)
     else:
         raise ValueError("Unsupported decoder type.")
 
 
-def main(args):
-    vocab = Vocabulary.from_files("%s/vocabulary" % args.model_path)
-    params = Params.from_file("%s/config.json" % args.model_path)
-
-    model = Model.from_params(params=params.pop("model"), vocab=vocab)
-    with open("%s/best.th" % args.model_path, "rb") as fh:
-        model.load_state_dict(torch.load(fh))
-    model = model.cuda(0)
-
-    reader = DatasetReader.from_params(params.pop("dataset_reader"))
-    valid_file = params.pop("validation_data_path")
-
-    valid = reader.read(valid_file)
-    instances = list(iter(valid))[:20]
+def get_parses(model, instances, args):
+    if args.truncate is not None:
+        instances = instances[:args.truncate]
 
     all_policies = get_policies(model, instances, "all_policies")
     all_tokens = [[tok.text for tok in instance[args.tokens_name]] for instance in instances]
@@ -78,13 +68,41 @@ def main(args):
                                   beam_size=args.beam)
 
         if actions == None:
-            print("Skipping null parse.")
-            continue
+            print("Found null parse.")
+            yield None
+        else:
+            parse, stack = get_parse(tokens, actions, args.decoder)
+            if len(stack) > 1:
+                print("No complete parse tree found for sentence.")
+                yield None
 
-        pairs = set(zip(tokens, actions))
-        parse, stack = get_parse(tokens, actions, args.decoder)
-        output = to_syntax_tree(parse)
-        import pdb; pdb.set_trace()
+            if args.interactive:
+                pairs = set(zip(tokens, actions))
+                output = to_syntax_tree(parse)
+                import pdb; pdb.set_trace()
+            yield parse
+
+
+def main(args):
+    vocab = Vocabulary.from_files("%s/vocabulary" % args.model_path)
+    params = Params.from_file("%s/config.json" % args.model_path)
+
+    model = Model.from_params(params=params.pop("model"), vocab=vocab)
+    with open("%s/best.th" % args.model_path, "rb") as fh:
+        model.load_state_dict(torch.load(fh))
+    model = model.cuda(0)
+
+    valid_params = params if args.valid_params is None else Params.from_file(args.valid_params)
+    reader = DatasetReader.from_params(valid_params.pop("dataset_reader"))
+    valid_path = args.valid_path or valid_params.pop("validation_data_path")
+
+    valid = reader.read(valid_path)
+    instances = list(iter(valid))
+    parses = list(get_parses(model, instances, args))
+
+    if args.f1:
+        gold_parses = reader.get_binary_trees(valid_path)
+        print("F1", get_batched_f1(gold_parses, parses))
 
 
 def parse_args():
@@ -94,7 +112,12 @@ def parse_args():
     parser.add_argument("--decoder", type=str, default="multipop")
     parser.add_argument("--beam", type=int, default=None)
     parser.add_argument("--top_k", type=int, default=10)
+    parser.add_argument("--valid_params", type=str, default=None)
+    parser.add_argument("--valid_path", type=str, default=None)
     parser.add_argument("--full", action="store_true")
+    parser.add_argument("--interactive", action="store_true")
+    parser.add_argument("-f1", action="store_true")
+    parser.add_argument("--truncate", type=int, default=None)
     return parser.parse_args()
 
 

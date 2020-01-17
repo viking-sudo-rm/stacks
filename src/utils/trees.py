@@ -1,43 +1,10 @@
 from typing import List, Iterator
-from deprecated import deprecated
 import json
 from nltk.tree import Tree
 
 
-"""
-Methods for manipulating unlabelled trees in nested list format. All of these methods should also
-work for NLTK trees, as NLTK trees are just lists with some extra stuff.
-"""
-
-
 # See https://www.clips.uantwerpen.be/pages/mbsp-tags.
 _PUNCTUATION_TAGS = {".", ",", ":", "(", ")"}
-
-
-@deprecated(reason="Don't rely on Htut et al.'s preprocessing.")
-def htut_parse_to_nested_lists(htut_string):
-    tokens = htut_string.split(" ")
-    stack = []
-    for token in tokens:
-        if token == "(":
-            continue
-        elif token == ")":  # Reduce.
-            right_child = stack.pop(0)
-            left_child = stack.pop(0)
-            stack.insert(0, [left_child, right_child])
-        else:  # Shift.
-            stack.insert(0, token)
-    return stack[0]
-
-
-@deprecated(reason="Don't rely on Htut et al.'s preprocessing.")
-def gen_htut_nested_lists(filename):
-    """Read Htut-formatted binary trees from a .jsonl file."""
-    with open(filename) as in_file:
-        for line in in_file:
-            json_dict = json.loads(line)
-            htut_parse = json_dict["sentence1_binary_parse"]
-            yield htut_parse_to_nested_lists(htut_parse)
 
 
 def _gen_flat_tree(tree) -> Iterator[str]:
@@ -89,7 +56,7 @@ def brackets(tree) -> List[str]:
         raise ValueError("Non-binary node in tree")
 
 
-def from_left_distances(sentence, left_dists):
+def from_left_distances(sentence, left_dists, return_stack: bool = False):
     """Construct a parse tree from a left_dists vector.
     Return None if the vectorization is invalid."""
     stack = []
@@ -99,7 +66,11 @@ def from_left_distances(sentence, left_dists):
                 return None
             const = [stack.pop(), const]
         stack.append(const)
-    return stack[-1], stack
+
+    if return_stack:
+        return stack[-1], stack
+    else:
+        return stack[-1]
 
 
 def from_right_distances(sentence, right_dists):

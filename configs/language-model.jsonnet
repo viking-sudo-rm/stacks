@@ -1,20 +1,22 @@
 # Model hyperparameters.
-local EMBEDDING_DIM = 300;
+local EMBEDDING_DIM = 400;  # 300;
 local CHAR_EMBEDDING_DIM = 50;
 local INPUT_DIM = EMBEDDING_DIM + CHAR_EMBEDDING_DIM;
-local HIDDEN_DIM = 650;
+local HIDDEN_DIM = 1100;  # 650;
 local STACK_DIM = 128;
 local SUMMMARY_SIZE = 5;
 local SUMMARY_DIM = SUMMMARY_SIZE * STACK_DIM;
 
 # Optimization hyperparameters.
 # Refer to https://github.com/viking-sudo-rm/bert-parsing/blob/master/configs/language-modeling/ptb.jsonnet
-local BATCH_SIZE = 16;
-local PATIENCE = 10;
+local BATCH_SIZE = 20;  # 16;
+local PATIENCE = 5;
 local CHAR_DROPOUT = 0.5;
 local EMBED_DROPOUT = 0.5;
 # local DROPOUT = 0.5;
 local WEIGHT_DECAY = 1.2e-6;
+
+# TODO: Get a strong baseline LSTM going using https://github.com/salesforce/awd-lstm-lm.
 
 # Path to the data on the file system.
 local DATA_ROOT = "/net/nfs.corp/allennlp/willm/data";
@@ -28,7 +30,7 @@ local ENCODER =
     "input_size": INPUT_DIM,
     "hidden_size": HIDDEN_DIM,
     "bidirectional": false,
-    "num_layers": 1,
+    "num_layers": 3,
   }
   else if ETYPE == "kpop-lstm" then {
     "type": "stack-encoder",

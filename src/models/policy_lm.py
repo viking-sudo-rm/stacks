@@ -14,10 +14,10 @@ from src.modules.stack_encoder import StackEncoder
 from src.utils.policy_loss import get_expected_num_pops, get_variational_terms
 
 
-@Model.register("num-pops-lm")
-class NumPopsLanguageModel(LanguageModel):
+@Model.register("policy-lm")
+class PolicyLanguageModel(LanguageModel):
     """
-    A LanguageModel where the number of pops is regularized to be close to n - 1.
+    A LanguageModel where the policy of the StackEncoder can be controlled in various ways.
     """
 
     def __init__(
