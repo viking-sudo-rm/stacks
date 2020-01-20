@@ -11,33 +11,21 @@ from allennlp.models import Model
 from src.data.agreement import AgreementReader
 from src.data.dyck import DyckReader
 from src.data.eval import EvalReader
+from src.data.code_gen import CodeGenReader
 from src.data.simple_lm import SimpleLmReader
 from src.decode.decoders import beam_decode, greedy_decode
-from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState
+from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState, NoOpDecoderState
+from src.decode.parsers import ActionParser, MergeParser, PushPopParser, MultipopParser, NoOpParser
 from src.models.policy_lm import PolicyLanguageModel
 from src.modules.controllers.feedforward import FeedForwardController
 from src.modules.controllers.suzgun import SuzgunRnnController, SuzgunRnnCellController
 from src.modules.merge_encoder import MergeEncoder
 from src.modules.stack_encoder import StackEncoder
 from src.utils.listener import get_policies
-from src.utils.trees import from_left_distances, to_syntax_tree
-from src.utils.minimalist import from_merges
-from src.utils.dyck import from_parentheses
 from src.utils.parse_eval import get_batched_f1
 
 
 _MERGE = "merge"
-
-
-def get_parse(tokens, actions, decoder_type):
-    if decoder_type == "push-pop":
-        return from_parentheses(tokens, actions)
-    elif decoder_type == "multipop":
-        return from_left_distances(tokens, actions, return_stack=True)
-    elif decoder_type == "merge":
-        return from_merges(tokens, actions)
-    else:
-        raise ValueError("Unsupported decoder type.")
 
 
 def get_parses(model, instances, args):
@@ -47,6 +35,7 @@ def get_parses(model, instances, args):
     all_policies = get_policies(model, instances, "all_policies")
     all_tokens = [[tok.text for tok in instance[args.tokens_name]] for instance in instances]
 
+    parser = ActionParser.by_name(args.decoder)()
     decoder_type = DecoderState.by_name(args.decoder)
 
     for tokens, policies in zip(all_tokens, all_policies):
@@ -71,7 +60,7 @@ def get_parses(model, instances, args):
             print("Found null parse.")
             yield None
         else:
-            parse, stack = get_parse(tokens, actions, args.decoder)
+            parse, stack = parser.get_parse(tokens, actions)
             if len(stack) > 1:
                 print("No complete parse tree found for sentence.")
                 yield None

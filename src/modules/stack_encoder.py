@@ -1,5 +1,6 @@
 from overrides import overrides
 import torch
+from typing import Optional
 
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder
 
@@ -7,6 +8,7 @@ from stacknn.superpos import Stack, NoOpStack, MultiPopStack, MultiPushStack
 from stacknn.utils.expectation import get_expectation
 
 from src.modules.controllers import StackController
+from src.utils.stack_registry import make_stack
 
 
 def get_action(logits):
@@ -21,11 +23,12 @@ class StackEncoder(Seq2SeqEncoder):
                  stack_dim: int,
                  summary_size: int,
                  controller: StackController,
+                 stack_type: str = "kpop",
                  num_actions: int = 6,
+                 max_depth: Optional[int] = None,
                  dropout: float = 0.,  # Dropout applies to the controller states.
                  store_policies: bool = False,
-                 project_states: bool = True,
-                 multipush: bool = False):
+                 project_states: bool = True):
         super().__init__()
         self.stack_dim = stack_dim
         self.summary_size = summary_size
@@ -34,8 +37,10 @@ class StackEncoder(Seq2SeqEncoder):
 
         self.controller = controller
         self.output_dim = self.get_output_dim()
-        stack_type = MultiPopStack if not multipush else MultiPushStack
-        self.stacks = stack_type(stack_dim, num_actions)
+        # TODO: Replace this with a factory or something?
+        self.stacks = make_stack(stack_type, stack_dim,
+                                 num_actions=num_actions,
+                                 max_depth=max_depth)
 
         self.all_policies = None
         self.store_policies = store_policies

@@ -3,7 +3,7 @@ from overrides import overrides
 from src.decode.states.base import DecoderState
 
 
-@DecoderState.register("multipop")
+@DecoderState.register("kpop")
 class MultipopDecoderState(DecoderState):
 
     """A decoder state describing an expression-like parsing scheme capable of closing multiple
