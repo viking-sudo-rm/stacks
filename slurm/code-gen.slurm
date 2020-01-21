@@ -9,8 +9,8 @@
 source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/code-gen.jsonnet
 
-encoder=noop
-dataset=bitcoin
-dir=/tmp/willm/stacks/code-gen/${dataset}/$encoder
+encoder=lstm
+dataset=tensorflow
+dir=/tmp/willm/stacks/lm/${dataset}/${encoder}
 
 DATASET=$dataset ENCODER=$encoder allennlp train $conf -s $dir --include-package=src

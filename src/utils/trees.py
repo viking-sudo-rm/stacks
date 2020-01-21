@@ -146,10 +146,3 @@ def add_bert_tags(tree: list) -> list:
 
 def add_eos(tree: list) -> list:
     return [tree, "<eos>"]
-
-def to_syntax_tree(tree: list):
-    if isinstance(tree, str):
-        return "[" + tree.replace("[", "{").replace("]", "}") + "]"
-    else:
-        child_strings = [to_syntax_tree(child) for child in tree]
-        return "[S " + " ".join(child_strings) + "]"

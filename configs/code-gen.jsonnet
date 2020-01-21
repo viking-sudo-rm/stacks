@@ -30,7 +30,7 @@ local ENCODER =
     "input_size": INPUT_DIM,
     "hidden_size": HIDDEN_DIM,
     "bidirectional": false,
-    "num_layers": 3,
+    "num_layers": 1,
   }
   else if ETYPE == "noop" then {
     "type": "stack-encoder",
@@ -52,11 +52,14 @@ local ENCODER =
 
 {
   "dataset_reader": {
-    "type": "code_gen",
+    "type": "python",
+    # "strip_names": false,
+    # "strip_numbers": false,
+    "max_length": 500,
   },
 
-  "train_data_path": DATA_ROOT + "/" + DATASET + "/train.txt",
-  "validation_data_path": DATA_ROOT + "/" + DATASET + "/valid.txt",
+  "train_data_path": DATA_ROOT + "/" + DATASET + "/train",
+  "validation_data_path": DATA_ROOT + "/" + DATASET + "/valid",
   
   "model": {
     "type": "language_model",

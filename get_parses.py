@@ -13,6 +13,7 @@ from src.data.dyck import DyckReader
 from src.data.eval import EvalReader
 from src.data.code_gen import CodeGenReader
 from src.data.simple_lm import SimpleLmReader
+from src.data.tokenized_python import TokenizedPythonReader
 from src.decode.decoders import beam_decode, greedy_decode
 from src.decode.states import DecoderState, MergeDecoderState, PushPopDecoderState, MultipopDecoderState, NoOpDecoderState
 from src.decode.parsers import ActionParser, MergeParser, PushPopParser, MultipopParser, NoOpParser
@@ -23,6 +24,7 @@ from src.modules.merge_encoder import MergeEncoder
 from src.modules.stack_encoder import StackEncoder
 from src.utils.listener import get_policies
 from src.utils.parse_eval import get_batched_f1
+from src.utils.serialize import to_syntax_tree, to_nested_indents
 
 
 _MERGE = "merge"
@@ -68,6 +70,8 @@ def get_parses(model, instances, args):
             if args.interactive:
                 pairs = set(zip(tokens, actions))
                 output = to_syntax_tree(parse)
+                nested_lists = "\n" + to_nested_indents(parse)
+                print(nested_lists)
                 import pdb; pdb.set_trace()
             yield parse
 
