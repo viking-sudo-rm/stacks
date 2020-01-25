@@ -21,6 +21,7 @@ local WEIGHT_DECAY = 1.2e-6;
 # Path to the data on the file system.
 local DATA_ROOT = "/net/nfs.corp/allennlp/willm/data";
 local DATASET = std.extVar("DATASET");
+local NAMES = std.extVar("NAMES");
 
 # Encoder specified by command line arguments.
 local ETYPE = std.extVar("ENCODER");
@@ -47,14 +48,44 @@ local ENCODER =
       "hidden_dim": HIDDEN_DIM,
     },
   }
+  else if ETYPE == "rewrite" then {
+    "type": "stack-encoder",
+    "stack_dim": STACK_DIM,
+    "summary_size": SUMMMARY_SIZE,
+    "stack_type": "rewrite",
+    "num_actions": 3,
+    "max_depth": MAX_DEPTH,
+    "controller": {
+      "type": "suzgun-generic-rnn",
+      "rnn_cell_type": "lstm",
+      "input_dim": INPUT_DIM,
+      "summary_dim": SUMMARY_DIM,
+      "hidden_dim": HIDDEN_DIM,
+    },
+  }
+  else if ETYPE == "kpop" then {
+    "type": "stack-encoder",
+    "stack_dim": STACK_DIM,
+    "summary_size": SUMMMARY_SIZE,
+    "stack_type": "kpop",
+    "num_actions": 3,
+    "max_depth": MAX_DEPTH,
+    "controller": {
+      "type": "suzgun-generic-rnn",
+      "rnn_cell_type": "lstm",
+      "input_dim": INPUT_DIM,
+      "summary_dim": SUMMARY_DIM,
+      "hidden_dim": HIDDEN_DIM,
+    },
+  }
   else error "Invalid encoder: " + std.manifestJson(ETYPE);
 
 
 {
   "dataset_reader": {
     "type": "python",
-    # "strip_names": false,
-    # "strip_numbers": false,
+    "strip_names": NAMES != "true",
+    "strip_numbers": NAMES != "true",
     "max_length": 500,
   },
 
@@ -80,7 +111,7 @@ local ENCODER =
 
   "iterator": {
     "type": "bucket",
-    "sorting_keys": [["source", "num_tokens"]],
+    "sorting_keys": [["source", "tokens___tokens"]],
     "batch_size": BATCH_SIZE,
   },
   "trainer": {

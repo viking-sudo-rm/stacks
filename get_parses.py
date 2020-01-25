@@ -30,6 +30,21 @@ from src.utils.serialize import to_syntax_tree, to_nested_indents
 _MERGE = "merge"
 
 
+def _load_model(vocab, model_params, args):
+    if not args.nocuda:
+        model = Model.from_params(params=model_params, vocab=vocab)
+        with open("%s/best.th" % args.model_path, "rb") as fh:
+            model.load_state_dict(torch.load(fh))
+        model = model.cuda(0)
+    else:
+        model = Model.from_params(params=model_params, vocab=vocab)
+        model = model.cpu()
+        with open("%s/best.th" % args.model_path, "rb") as fh:
+            model.load_state_dict(torch.load(fh, map_location=torch.device("cpu")))
+
+    return model
+
+
 def get_parses(model, instances, args):
     if args.truncate is not None:
         instances = instances[:args.truncate]
@@ -70,8 +85,7 @@ def get_parses(model, instances, args):
             if args.interactive:
                 pairs = set(zip(tokens, actions))
                 output = to_syntax_tree(parse)
-                nested_lists = "\n" + to_nested_indents(parse)
-                print(nested_lists)
+                print(output)
                 import pdb; pdb.set_trace()
             yield parse
 
@@ -79,11 +93,7 @@ def get_parses(model, instances, args):
 def main(args):
     vocab = Vocabulary.from_files("%s/vocabulary" % args.model_path)
     params = Params.from_file("%s/config.json" % args.model_path)
-
-    model = Model.from_params(params=params.pop("model"), vocab=vocab)
-    with open("%s/best.th" % args.model_path, "rb") as fh:
-        model.load_state_dict(torch.load(fh))
-    model = model.cuda(0)
+    model = _load_model(vocab, params.pop("model"), args)
 
     valid_params = params if args.valid_params is None else Params.from_file(args.valid_params)
     reader = DatasetReader.from_params(valid_params.pop("dataset_reader"))
@@ -102,15 +112,16 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_path", type=str)
     parser.add_argument("--tokens_name", type=str, default="source")
-    parser.add_argument("--decoder", type=str, default="multipop")
+    parser.add_argument("--decoder", type=str, default="kpop")
     parser.add_argument("--beam", type=int, default=None)
     parser.add_argument("--top_k", type=int, default=10)
     parser.add_argument("--valid_params", type=str, default=None)
     parser.add_argument("--valid_path", type=str, default=None)
     parser.add_argument("--full", action="store_true")
     parser.add_argument("--interactive", action="store_true")
-    parser.add_argument("-f1", action="store_true")
+    parser.add_argument("--f1", action="store_true")
     parser.add_argument("--truncate", type=int, default=None)
+    parser.add_argument("--nocuda", action="store_true", help="use the CPU instead of the GPU")
     return parser.parse_args()
 
 

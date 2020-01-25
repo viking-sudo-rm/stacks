@@ -31,5 +31,8 @@ def _get_f1(gold_tree, our_tree):
 
 
 def get_batched_f1(gold_trees: List[list], pred_trees: List[list]) -> int:
+    # Require lists and this check, since zipping two generators together will not throw an error if
+    # the lengths do not match.
+    assert len(gold_trees) == len(pred_trees), "Mismatched number of trees."
     f1s = [_get_f1(gold, pred) for gold, pred in zip(gold_trees, pred_trees)]
     return np.mean(f1s)

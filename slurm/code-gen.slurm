@@ -9,8 +9,14 @@
 source /home/willm/anaconda3/bin/activate allennlp
 conf=/home/willm/code/stacks/configs/code-gen.jsonnet
 
-encoder=lstm
+encoder=kpop
 dataset=tensorflow
-dir=/tmp/willm/stacks/lm/${dataset}/${encoder}
+names=trues
 
-DATASET=$dataset ENCODER=$encoder allennlp train $conf -s $dir --include-package=src
+if [ "$names" = "true" ]; then
+    dir=/tmp/willm/stacks/lm/${dataset}/${encoder}-names
+else
+    dir=/tmp/willm/stacks/lm/${dataset}/${encoder}
+fi
+
+DATASET=$dataset ENCODER=$encoder NAMES=$names allennlp train $conf -s $dir --include-package=src

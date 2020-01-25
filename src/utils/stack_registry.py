@@ -1,6 +1,6 @@
 from typing import Optional
 
-from stacknn.superpos import Stack, NoOpStack, MultiPopStack, MultiPushStack
+from stacknn.superpos import Stack, NoOpStack, MultiPopStack, MultiPushStack, RewriteStack
 
 
 _STACKS = {
@@ -8,6 +8,7 @@ _STACKS = {
     "noop": NoOpStack,
     "kpop": MultiPopStack,
     "kpush": MultiPushStack,
+    "rewrite": RewriteStack,
 }
 
 
